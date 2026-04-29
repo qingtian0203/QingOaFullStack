@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git 提交 Agent 前缀"
+  short_description: "按 AI Agent 身份添加提交前缀。"
+  default_prompt: "在 QingOaFullStack 提交前，先识别自己是 Codex 还是 Antigravity，并在 commit subject 最前面加 [codex] 或 [antigravity]。"
