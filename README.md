@@ -7,11 +7,11 @@
 ```text
 QingOaFullStack/
 ├── API_QingOA/      # FastAPI + SQLite 接口后台
-├── App_QingOA/      # Android App，后续放置
+├── APP_QingOA/      # Android App
 └── WAP_QingOA/      # WAP / H5 页面，v2 再加入
 ```
 
-当前已完成 `API_QingOA` v1.0。
+当前已完成 `API_QingOA` 与 `APP_QingOA` 的 v1.5A 联调基础：登录、首页菜单、通知、上下班打卡、下班更新、每日打卡记录聚合、接口调试与请求日志。
 
 ## 后端启动
 
@@ -25,3 +25,27 @@ python run.py
 
 默认端口：`8010`。
 
+## App 现状
+
+`APP_QingOA` 是 Android 原生演示 App，当前主要页面：
+
+- 登录 / Splash Token 校验
+- 首页菜单 + 通知公告
+- 考勤打卡：上班卡不可重复，下班卡可更新
+- 打卡记录：接口仍返回明细，App 按自然日聚合成每日考勤卡
+- 我的页：动态功能入口，未实现能力保持灰显
+
+```bash
+cd /Users/konglingjia/AIProject/QingOaFullStack/APP_QingOA
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew testDebugUnitTest assembleDebug
+```
+
+## 验证命令
+
+```bash
+cd /Users/konglingjia/AIProject/QingOaFullStack/API_QingOA
+.venv/bin/pytest -q
+
+cd /Users/konglingjia/AIProject/QingOaFullStack/APP_QingOA
+JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew testDebugUnitTest assembleDebug
+```

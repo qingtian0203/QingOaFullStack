@@ -3,6 +3,7 @@ package com.qingtian.app_qingoa.ui.auth;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.qingtian.app_qingoa.databinding.ActivitySplashBinding;
 import com.qingtian.app_qingoa.base.BaseActivity;
 import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
@@ -27,10 +28,13 @@ import retrofit2.Response;
  */
 public class SplashActivity extends BaseActivity {
 
+    private ActivitySplashBinding mBinding;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 无需 setContentView，主题背景即为闪屏画面
+        mBinding = ActivitySplashBinding.inflate(getLayoutInflater());
+        setContentView(mBinding.getRoot());
 
         UserSession session = UserSession.getInstance();
         if (!session.isLoggedIn()) {

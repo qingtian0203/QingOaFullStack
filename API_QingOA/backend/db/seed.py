@@ -114,8 +114,8 @@ def reset_database(db: Session) -> None:
             action="native",
             target="OkrListActivity",
             section="mine",
-            enabled=1,
-            disabled_reason=None,
+            enabled=0,
+            disabled_reason="v1.5B 开放",
             sort_order=2,
         ),
     ]
@@ -179,8 +179,8 @@ def ensure_v15_static_data(db: Session) -> None:
             "action": "native",
             "target": "OkrListActivity",
             "section": "mine",
-            "enabled": 1,
-            "disabled_reason": None,
+            "enabled": 0,
+            "disabled_reason": "v1.5B 开放",
             "sort_order": 2,
         },
     ]

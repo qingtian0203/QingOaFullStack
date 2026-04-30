@@ -68,10 +68,12 @@ public class HomeFragment extends Fragment {
                         setupMenuGrid(body.getData());
                     }
                 }
+                mBinding.loadingMenu.setVisibility(View.GONE);
             }
 
             @Override
             public void onFailure(Call<ApiResponse<MenuData>> call, Throwable t) {
+                if (isAdded()) mBinding.loadingMenu.setVisibility(View.GONE);
                 if (isAdded()) ToastUtils.show(requireContext(), "菜单加载失败");
             }
         });
@@ -127,10 +129,12 @@ public class HomeFragment extends Fragment {
                                 setupNoticeList(body.getData());
                             }
                         }
+                        mBinding.loadingNotices.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onFailure(Call<ApiResponse<NoticeListData>> call, Throwable t) {
+                        if (isAdded()) mBinding.loadingNotices.setVisibility(View.GONE);
                         // 公告加载失败静默处理，不影响主流程
                     }
                 });

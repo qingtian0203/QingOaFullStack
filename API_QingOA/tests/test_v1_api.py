@@ -58,6 +58,8 @@ def test_login_user_info_and_home_menu():
     mine_menus = body["data"]["menus"]
     assert mine_menus[0]["target"] == "PunchRecordListActivity"
     assert mine_menus[1]["target"] == "OkrListActivity"
+    assert mine_menus[1]["enabled"] is False
+    assert mine_menus[1]["disabled_reason"] == "v1.5B 开放"
 
 
 def test_repeated_login_replaces_active_token():

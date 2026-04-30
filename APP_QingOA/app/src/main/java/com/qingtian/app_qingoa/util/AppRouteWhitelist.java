@@ -14,9 +14,7 @@ public class AppRouteWhitelist {
 
     private static final Set<String> ALLOWED_TARGETS = new HashSet<>(Arrays.asList(
             "PunchCardActivity",
-            "PunchRecordListActivity",
-            "OkrListActivity",        // v1.5B 开放
-            "NoticeListActivity"      // v2.0 开放
+            "PunchRecordListActivity"
     ));
 
     /** 检查 target 是否在白名单内 */

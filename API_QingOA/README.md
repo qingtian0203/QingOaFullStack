@@ -10,6 +10,17 @@ QingAgent 自动化测试实验靶场后端。目标是提供一套透明、可�
 - opaque token 鉴权
 - 内存调试基础设施：场景注入、请求日志、冻结时间
 
+## 当前版本状态
+
+当前后端支撑 `APP_QingOA` v1.5A：
+
+- `konglingjia/123456` 为主测试账号，展示名为晴天
+- `faraday/123456` 用于远距离定位异常场景
+- 首页菜单只开放考勤打卡，未实现菜单保持灰显
+- 我的页菜单开放我的打卡记录，OKR 目标先灰显为 `v1.5B 开放`
+- 上班卡每天只允许一次，下班卡允许更新
+- `/api/punch/records` 保持明细接口；App 端按 `punch_date` 聚合成每日考勤卡
+
 ## 启动
 
 ```bash
@@ -66,6 +77,17 @@ http://<Mac 局域网 IP>:8010
 
 `/api/punch/clock-in` 为 v1 兼容接口，v1.5 App 请使用 `/api/punch/clock` 并传 `punch_type=clock_in|clock_out`。
 
+### v1.5A 打卡规则
+
+| 场景 | 行为 |
+|---|---|
+| 上班打卡成功 | 生成 `punch_type=clock_in` 记录 |
+| 重复上班打卡 | 返回 `1008`，不生成新记录 |
+| 未上班先下班 | 返回 `1007` |
+| 下班打卡成功 | 生成 `punch_type=clock_out` 记录 |
+| 重复下班打卡 | 更新当天下班记录，返回 `updated=true` |
+| 超范围打卡 | 返回 `1004`，不生成记录，请看 `/debug/requests` 中的坐标日志 |
+
 ## 调试接口
 
 `/debug/*` v1 不需要鉴权，仅用于本地测试环境。
@@ -84,7 +106,7 @@ http://<Mac 局域网 IP>:8010
 ## 标准测试链路
 
 ```bash
-pytest
+.venv/bin/pytest -q
 ```
 
 测试会自动使用临时 SQLite 库，不会重置正在联调的 `data/qing_oa_v1.db`。

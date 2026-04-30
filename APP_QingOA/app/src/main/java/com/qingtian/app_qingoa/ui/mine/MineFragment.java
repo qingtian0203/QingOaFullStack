@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.qingtian.app_qingoa.base.BaseActivity;
 import com.qingtian.app_qingoa.databinding.FragmentMineBinding;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.UserInfo;
@@ -18,7 +19,6 @@ import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.session.UserSession;
 import com.qingtian.app_qingoa.ui.auth.LoginActivity;
-import com.qingtian.app_qingoa.ui.home.MenuAdapter;
 import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchRecordListActivity;
 import com.qingtian.app_qingoa.util.AppRouteWhitelist;
@@ -74,25 +74,32 @@ public class MineFragment extends Fragment {
                 if (!isAdded()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     ApiResponse<MenuData> body = response.body();
+                    if (body.isTokenExpired()) {
+                        ((BaseActivity) requireActivity()).handleTokenExpired();
+                        return;
+                    }
                     if (body.isSuccess() && body.getData() != null
                             && body.getData().getMenus() != null) {
                         setupMineMenuList(body.getData());
                     }
                 }
+                mBinding.loadingMineMenu.setVisibility(View.GONE);
             }
 
             @Override
             public void onFailure(Call<ApiResponse<MenuData>> call, Throwable t) {
+                if (isAdded()) mBinding.loadingMineMenu.setVisibility(View.GONE);
                 // 我的菜单加载失败静默处理
             }
         });
     }
 
     private void setupMineMenuList(MenuData data) {
+        mBinding.loadingMineMenu.setVisibility(View.GONE);
         mBinding.rvMineMenu.setVisibility(View.VISIBLE);
         // 纵向列表展示（与首页九宫格区分）
         mBinding.rvMineMenu.setLayoutManager(new LinearLayoutManager(requireContext()));
-        mBinding.rvMineMenu.setAdapter(new MenuAdapter(data.getMenus(), item -> {
+        mBinding.rvMineMenu.setAdapter(new MineMenuAdapter(data.getMenus(), item -> {
             if (!item.isEnabled()) {
                 String reason = item.getDisabledReason() != null
                         ? item.getDisabledReason() : "功能暂未开放";

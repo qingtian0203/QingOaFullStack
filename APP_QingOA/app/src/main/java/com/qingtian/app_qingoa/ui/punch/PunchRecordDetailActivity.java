@@ -62,6 +62,7 @@ public class PunchRecordDetailActivity extends BaseActivity {
     }
 
     private void bindDetail(PunchRecordDetailData data) {
+        mBinding.detailContent.setVisibility(View.VISIBLE);
         mBinding.tvTitle.setText(data.getPunchTypeLabel());
         mBinding.tvTypeLabel.setText(data.getPunchTypeLabel());
 

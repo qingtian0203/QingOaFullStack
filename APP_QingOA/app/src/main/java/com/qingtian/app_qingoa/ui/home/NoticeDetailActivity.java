@@ -66,6 +66,7 @@ public class NoticeDetailActivity extends BaseActivity {
     }
 
     private void bindDetail(NoticeDetailData data) {
+        mBinding.detailContent.setVisibility(View.VISIBLE);
         mBinding.tvNoticeTitle.setText(data.getTitle() != null ? data.getTitle() : "");
         mBinding.tvNoticeTime.setText(data.getCreatedAt() != null ? data.getCreatedAt() : "");
         mBinding.tvNoticeContent.setText(data.getContent() != null ? data.getContent() : "");

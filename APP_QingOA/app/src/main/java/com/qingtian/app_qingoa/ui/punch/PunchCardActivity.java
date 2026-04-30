@@ -1,6 +1,7 @@
 package com.qingtian.app_qingoa.ui.punch;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -11,6 +12,7 @@ import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
 
 import com.qingtian.app_qingoa.base.BaseActivity;
+import com.qingtian.app_qingoa.R;
 import com.qingtian.app_qingoa.databinding.ActivityPunchCardBinding;
 import com.qingtian.app_qingoa.model.PunchResultData;
 import com.qingtian.app_qingoa.model.PunchStatusData;
@@ -19,7 +21,10 @@ import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.net.PunchRequest;
 import com.qingtian.app_qingoa.util.ToastUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -48,8 +53,12 @@ public class PunchCardActivity extends BaseActivity {
         setContentView(mBinding.getRoot());
 
         mBinding.btnBack.setOnClickListener(v -> finish());
+        mBinding.btnRecords.setOnClickListener(v ->
+                startActivity(new Intent(this, PunchRecordListActivity.class)));
         mBinding.btnClockIn.setOnClickListener(v -> startPunch("clock_in"));
         mBinding.btnClockOut.setOnClickListener(v -> startPunch("clock_out"));
+        mBinding.tvTodayDate.setText(new SimpleDateFormat("yyyy-MM-dd  EEEE", Locale.CHINA)
+                .format(new Date()));
 
         loadTodayStatus();
     }
@@ -89,38 +98,52 @@ public class PunchCardActivity extends BaseActivity {
 
         // ── 上班卡 ──
         if (clockIn != null && clockIn.isDone()) {
-            mBinding.tvClockInStatus.setText("已打卡 ✓");
+            mBinding.tvClockInStatus.setText("已完成");
             mBinding.tvClockInStatus.setTextColor(0xFF4CAF50);
-            mBinding.tvClockInStatus.setBackgroundResource(com.qingtian.app_qingoa.R.drawable.bg_tag_success);
+            mBinding.tvClockInStatus.setBackgroundResource(R.drawable.bg_tag_success);
+            mBinding.dotClockIn.setBackgroundResource(R.drawable.bg_timeline_dot_success);
             mBinding.tvClockInTime.setVisibility(View.VISIBLE);
-            mBinding.tvClockInTime.setText("打卡时间：" + clockIn.getTime());
-            // 上班卡已打，隐藏按钮（不可重复）
+            mBinding.tvClockInTime.setText(clockIn.getTime());
             mBinding.btnClockIn.setVisibility(View.GONE);
         } else {
             mBinding.tvClockInStatus.setText("未打卡");
-            mBinding.tvClockInTime.setVisibility(View.GONE);
+            mBinding.tvClockInStatus.setTextColor(0xFFA8AFBD);
+            mBinding.tvClockInStatus.setBackgroundResource(R.drawable.bg_tag_pending);
+            mBinding.dotClockIn.setBackgroundResource(R.drawable.bg_timeline_dot_pending);
+            mBinding.tvClockInTime.setVisibility(View.VISIBLE);
+            mBinding.tvClockInTime.setText("等待打卡");
             mBinding.btnClockIn.setVisibility(View.VISIBLE);
-            mBinding.btnClockIn.setText("立即上班打卡");
+            mBinding.btnClockIn.setText("上班打卡\n" + formatActionTime());
+            mBinding.btnClockIn.setBackgroundResource(R.drawable.bg_punch_circle);
         }
 
         // ── 下班卡 ──
         boolean clockInDone = clockIn != null && clockIn.isDone();
         if (clockOut != null && clockOut.isDone()) {
-            mBinding.tvClockOutStatus.setText("已打卡 ✓");
+            mBinding.tvClockOutStatus.setText("已完成");
             mBinding.tvClockOutStatus.setTextColor(0xFF4CAF50);
-            mBinding.tvClockOutStatus.setBackgroundResource(com.qingtian.app_qingoa.R.drawable.bg_tag_success);
+            mBinding.tvClockOutStatus.setBackgroundResource(R.drawable.bg_tag_success);
+            mBinding.dotClockOut.setBackgroundResource(R.drawable.bg_timeline_dot_success);
             mBinding.tvClockOutTime.setVisibility(View.VISIBLE);
-            mBinding.tvClockOutTime.setText("打卡时间：" + clockOut.getTime());
-            // 下班卡允许重复刷新（加班场景）
+            mBinding.tvClockOutTime.setText(clockOut.getTime());
             mBinding.btnClockOut.setEnabled(true);
-            mBinding.btnClockOut.setText("更新下班时间");
+            mBinding.btnClockOut.setVisibility(View.VISIBLE);
+            mBinding.btnClockOut.setAlpha(1.0f);
+            mBinding.btnClockOut.setBackgroundResource(R.drawable.bg_punch_circle);
+            mBinding.btnClockOut.setText("更新打卡\n" + formatActionTime());
         } else {
             mBinding.tvClockOutStatus.setText("未打卡");
-            mBinding.tvClockOutTime.setVisibility(View.GONE);
-            mBinding.btnClockOut.setText("下班打卡");
-            // 未打上班卡时下班卡置灰（服务端会校验 1007，此处为友好提示）
+            mBinding.tvClockOutStatus.setTextColor(0xFFA8AFBD);
+            mBinding.tvClockOutStatus.setBackgroundResource(R.drawable.bg_tag_pending);
+            mBinding.dotClockOut.setBackgroundResource(R.drawable.bg_timeline_dot_pending);
+            mBinding.tvClockOutTime.setVisibility(View.VISIBLE);
+            mBinding.tvClockOutTime.setText(clockInDone ? "等待打卡" : "上班卡完成后开启");
+            mBinding.btnClockOut.setText("下班打卡\n" + formatActionTime());
             mBinding.btnClockOut.setEnabled(clockInDone);
-            mBinding.btnClockOut.setAlpha(clockInDone ? 1.0f : 0.4f);
+            mBinding.btnClockOut.setVisibility(clockInDone ? View.VISIBLE : View.GONE);
+            mBinding.btnClockOut.setAlpha(clockInDone ? 1.0f : 0.45f);
+            mBinding.btnClockOut.setBackgroundResource(clockInDone
+                    ? R.drawable.bg_punch_circle : R.drawable.bg_punch_circle_disabled);
         }
 
         // 打卡点名称
@@ -129,6 +152,10 @@ public class PunchCardActivity extends BaseActivity {
             mBinding.tvPunchPoint.setText("打卡点：" + points.get(0).getName()
                     + "（范围 " + points.get(0).getRadius() + "m）");
         }
+    }
+
+    private String formatActionTime() {
+        return new SimpleDateFormat("HH:mm:ss", Locale.CHINA).format(new Date());
     }
 
     /** 触发打卡（先检查测试坐标覆盖，再走真实 GPS） */
