@@ -24,14 +24,14 @@ def reset_database(db: Session) -> None:
 
     password = hash_password("123456")
     users = [
-        User(username="admin", password=password, name="张三", dept="技术部", role="员工", has_punch_permission=1),
+        User(username="konglingjia", password=password, name="晴天", dept="技术部", role="员工", has_punch_permission=1),
         User(username="nopunch", password=password, name="李四", dept="行政部", role="员工", has_punch_permission=0),
         User(username="expired", password=password, name="王五", dept="测试部", role="员工", has_punch_permission=1),
         User(username="faraday", password=password, name="法拉第", dept="外勤部", role="员工", has_punch_permission=1),
     ]
     db.add_all(users)
 
-    db.add(PunchPoint(name="总部大楼", lat=39.9042, lng=116.4074, radius=500, is_active=1))
+    db.add(PunchPoint(name="晴天打卡点", lat=39.811774, lng=116.295234, radius=500, is_active=1))
 
     notices = [
         Notice(
@@ -73,6 +73,7 @@ def reset_database(db: Session) -> None:
             icon="ic_punch",
             action="native",
             target="PunchCardActivity",
+            section="home",
             enabled=1,
             disabled_reason=None,
             sort_order=1,
@@ -82,6 +83,7 @@ def reset_database(db: Session) -> None:
             icon="ic_workflow",
             action="native",
             target="WorkflowActivity",
+            section="home",
             enabled=0,
             disabled_reason="功能开发中",
             sort_order=2,
@@ -90,10 +92,31 @@ def reset_database(db: Session) -> None:
             name="通知公告",
             icon="ic_notice",
             action="native",
-            target="NoticeActivity",
+            target="NoticeListActivity",
+            section="home",
             enabled=0,
             disabled_reason="功能开发中",
             sort_order=3,
+        ),
+        Menu(
+            name="我的打卡记录",
+            icon="ic_punch_record",
+            action="native",
+            target="PunchRecordListActivity",
+            section="mine",
+            enabled=1,
+            disabled_reason=None,
+            sort_order=1,
+        ),
+        Menu(
+            name="OKR 目标",
+            icon="ic_okr",
+            action="native",
+            target="OkrListActivity",
+            section="mine",
+            enabled=1,
+            disabled_reason=None,
+            sort_order=2,
         ),
     ]
     db.add_all(menus)
@@ -104,3 +127,68 @@ def seed_if_empty(db: Session) -> None:
     count = db.scalar(select(func.count(User.id))) or 0
     if count == 0:
         reset_database(db)
+    else:
+        ensure_v15_static_data(db)
+
+
+def ensure_v15_static_data(db: Session) -> None:
+    menu_specs = [
+        {
+            "name": "考勤打卡",
+            "icon": "ic_punch",
+            "action": "native",
+            "target": "PunchCardActivity",
+            "section": "home",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 1,
+        },
+        {
+            "name": "审批流",
+            "icon": "ic_workflow",
+            "action": "native",
+            "target": "WorkflowActivity",
+            "section": "home",
+            "enabled": 0,
+            "disabled_reason": "功能开发中",
+            "sort_order": 2,
+        },
+        {
+            "name": "通知公告",
+            "icon": "ic_notice",
+            "action": "native",
+            "target": "NoticeListActivity",
+            "section": "home",
+            "enabled": 0,
+            "disabled_reason": "功能开发中",
+            "sort_order": 3,
+        },
+        {
+            "name": "我的打卡记录",
+            "icon": "ic_punch_record",
+            "action": "native",
+            "target": "PunchRecordListActivity",
+            "section": "mine",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 1,
+        },
+        {
+            "name": "OKR 目标",
+            "icon": "ic_okr",
+            "action": "native",
+            "target": "OkrListActivity",
+            "section": "mine",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 2,
+        },
+    ]
+    for spec in menu_specs:
+        row = db.scalar(select(Menu).where(Menu.name == spec["name"]).where(Menu.section == spec["section"]))
+        if row is None:
+            row = Menu()
+            db.add(row)
+        for key, value in spec.items():
+            setattr(row, key, value)
+    db.commit()

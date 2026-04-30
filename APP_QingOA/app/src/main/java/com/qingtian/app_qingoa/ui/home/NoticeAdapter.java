@@ -13,13 +13,19 @@ import com.qingtian.app_qingoa.model.NoticeListData;
 
 import java.util.List;
 
-/** 通知公告列表 Adapter */
+/** 通知公告列表 Adapter，支持点击回调 */
 public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder> {
 
-    private final List<NoticeListData.NoticeItem> mItems;
+    public interface OnItemClickListener {
+        void onItemClick(NoticeListData.NoticeItem item);
+    }
 
-    public NoticeAdapter(List<NoticeListData.NoticeItem> items) {
+    private final List<NoticeListData.NoticeItem> mItems;
+    private final OnItemClickListener mListener;
+
+    public NoticeAdapter(List<NoticeListData.NoticeItem> items, OnItemClickListener listener) {
         this.mItems = items;
+        this.mListener = listener;
     }
 
     @NonNull
@@ -36,12 +42,13 @@ public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder
         holder.tvTitle.setText(item.getTitle());
         holder.tvSummary.setText(item.getSummary() != null ? item.getSummary() : "");
         holder.tvTime.setText(item.getCreatedAt() != null ? item.getCreatedAt() : "");
+        holder.itemView.setOnClickListener(v -> {
+            if (mListener != null) mListener.onItemClick(item);
+        });
     }
 
     @Override
-    public int getItemCount() {
-        return mItems != null ? mItems.size() : 0;
-    }
+    public int getItemCount() { return mItems != null ? mItems.size() : 0; }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvTitle, tvSummary, tvTime;

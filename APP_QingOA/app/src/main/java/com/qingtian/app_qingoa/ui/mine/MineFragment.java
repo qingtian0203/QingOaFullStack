@@ -9,13 +9,19 @@ import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.qingtian.app_qingoa.databinding.FragmentMineBinding;
+import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.UserInfo;
 import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.session.UserSession;
 import com.qingtian.app_qingoa.ui.auth.LoginActivity;
+import com.qingtian.app_qingoa.ui.home.MenuAdapter;
+import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
+import com.qingtian.app_qingoa.ui.punch.PunchRecordListActivity;
+import com.qingtian.app_qingoa.util.AppRouteWhitelist;
 import com.qingtian.app_qingoa.util.ToastUtils;
 
 import retrofit2.Call;
@@ -24,8 +30,7 @@ import retrofit2.Response;
 
 /**
  * 我的 Fragment。
- * 展示用户信息（优先读内存缓存，无网络也能显示）。
- * 退出登录：调 /api/auth/logout → 清除 Session → 跳登录页。
+ * v1.5A 新增：动态功能入口区（调 /api/mine/menu），复用 MenuData 和白名单路由逻辑。
  */
 public class MineFragment extends Fragment {
 
@@ -48,6 +53,9 @@ public class MineFragment extends Fragment {
         showUserInfo(UserSession.getInstance().getUserInfo());
 
         mBinding.btnLogout.setOnClickListener(v -> logout());
+
+        // 加载"我的"动态功能入口
+        loadMineMenu();
     }
 
     private void showUserInfo(UserInfo info) {
@@ -57,8 +65,64 @@ public class MineFragment extends Fragment {
         mBinding.tvRole.setText(info.getRole() != null ? info.getRole() : "");
     }
 
+    /** 调 /api/mine/menu，字段结构与 home/menu 完全一致，复用 MenuData + MenuAdapter */
+    private void loadMineMenu() {
+        ApiClient.getService().getMineMenu().enqueue(new Callback<ApiResponse<MenuData>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<MenuData>> call,
+                                   Response<ApiResponse<MenuData>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    ApiResponse<MenuData> body = response.body();
+                    if (body.isSuccess() && body.getData() != null
+                            && body.getData().getMenus() != null) {
+                        setupMineMenuList(body.getData());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<MenuData>> call, Throwable t) {
+                // 我的菜单加载失败静默处理
+            }
+        });
+    }
+
+    private void setupMineMenuList(MenuData data) {
+        mBinding.rvMineMenu.setVisibility(View.VISIBLE);
+        // 纵向列表展示（与首页九宫格区分）
+        mBinding.rvMineMenu.setLayoutManager(new LinearLayoutManager(requireContext()));
+        mBinding.rvMineMenu.setAdapter(new MenuAdapter(data.getMenus(), item -> {
+            if (!item.isEnabled()) {
+                String reason = item.getDisabledReason() != null
+                        ? item.getDisabledReason() : "功能暂未开放";
+                ToastUtils.show(requireContext(), reason);
+                return;
+            }
+            navigateMineTarget(item.getTarget());
+        }));
+    }
+
+    /** 我的页路由，同样走白名单校验 */
+    private void navigateMineTarget(String target) {
+        if (!AppRouteWhitelist.isAllowed(target)) {
+            ToastUtils.show(requireContext(), "功能开发中");
+            return;
+        }
+        switch (target) {
+            case "PunchCardActivity":
+                startActivity(new Intent(requireContext(), PunchCardActivity.class));
+                break;
+            case "PunchRecordListActivity":
+                startActivity(new Intent(requireContext(), PunchRecordListActivity.class));
+                break;
+            default:
+                ToastUtils.show(requireContext(), "功能开发中");
+                break;
+        }
+    }
+
     private void logout() {
-        // 先调登出接口（忽略失败，保证客户端一定能退出）
         ApiClient.getService().logout().enqueue(new Callback<ApiResponse<Void>>() {
             @Override
             public void onResponse(Call<ApiResponse<Void>> call,
@@ -74,7 +138,6 @@ public class MineFragment extends Fragment {
         });
     }
 
-    /** 清除本地 Session，跳回登录页 */
     private void doLocalLogout() {
         if (!isAdded()) return;
         UserSession.getInstance().clearSession();

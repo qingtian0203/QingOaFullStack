@@ -16,24 +16,9 @@ router = APIRouter(prefix="/api/home", tags=["home"])
 @router.get("/menu")
 def menu(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     rows = db.scalars(
-        select(Menu).order_by(Menu.sort_order.asc(), Menu.id.asc())
+        select(Menu).where(Menu.section == "home").order_by(Menu.sort_order.asc(), Menu.id.asc())
     ).all()
-    return ok(
-        {
-            "menus": [
-                {
-                    "id": row.id,
-                    "name": row.name,
-                    "icon": row.icon,
-                    "action": row.action,
-                    "target": row.target,
-                    "enabled": bool(row.enabled),
-                    "disabled_reason": row.disabled_reason,
-                }
-                for row in rows
-            ]
-        }
-    )
+    return ok({"menus": [_menu_item(row) for row in rows]})
 
 
 @router.get("/notices")
@@ -68,3 +53,14 @@ def notices(
         }
     )
 
+
+def _menu_item(row: Menu) -> dict:
+    return {
+        "id": row.id,
+        "name": row.name,
+        "icon": row.icon,
+        "action": row.action,
+        "target": row.target,
+        "enabled": bool(row.enabled),
+        "disabled_reason": row.disabled_reason,
+    }

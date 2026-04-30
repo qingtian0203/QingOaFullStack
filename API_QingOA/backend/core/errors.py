@@ -8,6 +8,9 @@ BAD_REQUEST = 1003
 OUT_OF_RANGE = 1004
 ALREADY_PUNCHED = 1005
 NO_PUNCH_PERMISSION = 1006
+NO_CLOCK_IN = 1007
+CLOCK_IN_ALREADY_DONE = 1008
+RESOURCE_NOT_FOUND = 1010
 INTERNAL_ERROR = 9999
 
 
@@ -18,4 +21,3 @@ class ApiError(Exception):
         self.data = data
         self.http_status = http_status
         super().__init__(msg)
-

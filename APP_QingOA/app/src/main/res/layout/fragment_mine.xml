@@ -23,6 +23,7 @@
             android:textSize="24sp"
             android:textStyle="bold" />
 
+        <!-- 用户信息卡片 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -88,6 +89,25 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- v1.5A 新增：动态功能入口区 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="8dp"
+            android:text="功能入口"
+            android:textColor="@color/oa_text_muted"
+            android:textSize="13sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_mine_menu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_card"
+            android:nestedScrollingEnabled="false"
+            android:visibility="gone" />
+
+        <!-- 账号状态 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,7 +128,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="已登录 QingOA v1.0 演示环境"
+                android:text="已登录 QingOA v1.5 演示环境"
                 android:textColor="@color/oa_text_secondary"
                 android:textSize="14sp" />
 

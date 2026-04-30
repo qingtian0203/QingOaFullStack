@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -40,10 +40,13 @@ class PunchPoint(Base):
 
 class PunchRecord(Base):
     __tablename__ = "punch_records"
+    __table_args__ = (UniqueConstraint("user_id", "punch_date", "punch_type", name="uq_punch_user_date_type"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     punch_point_id: Mapped[int] = mapped_column(ForeignKey("punch_points.id"), nullable=False)
+    punch_type: Mapped[str] = mapped_column(String, default="clock_in", nullable=False)
+    punch_date: Mapped[str] = mapped_column(String, default="", nullable=False, index=True)
     punch_time: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     lat: Mapped[float] = mapped_column(Float, nullable=False)
     lng: Mapped[float] = mapped_column(Float, nullable=False)
@@ -73,6 +76,7 @@ class Menu(Base):
     icon: Mapped[str | None] = mapped_column(String, nullable=True)
     action: Mapped[str] = mapped_column(String, default="native")
     target: Mapped[str | None] = mapped_column(String, nullable=True)
+    section: Mapped[str] = mapped_column(String, default="home", nullable=False, index=True)
     enabled: Mapped[int] = mapped_column(Integer, default=1)
     disabled_reason: Mapped[str | None] = mapped_column(String, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)

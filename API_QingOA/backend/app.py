@@ -17,7 +17,7 @@ from backend.core.errors import ApiError, BAD_REQUEST, INTERNAL_ERROR
 from backend.core.response import fail, json_response, ok
 from backend.db.database import SessionLocal, create_tables
 from backend.db.seed import seed_if_empty
-from backend.routers import auth, debug, home, punch
+from backend.routers import auth, debug, home, mine, notices, punch
 from backend.services import auth_service, debug_service
 
 
@@ -46,6 +46,7 @@ async def debug_observability_middleware(request: Request, call_next):
     body_bytes = await request.body()
     request_body = _decode_json(body_bytes)
     user_id = _user_id_from_request(request)
+    auth_present = _authorization_present(request)
     scenario_injected = False
 
     async def receive():
@@ -66,6 +67,7 @@ async def debug_observability_middleware(request: Request, call_next):
                 method=request.method,
                 path=request.url.path,
                 user_id=user_id,
+                auth_present=auth_present,
                 request_body=request_body,
                 response_code=_api_code(response_body),
                 response_body=response_body,
@@ -85,6 +87,7 @@ async def debug_observability_middleware(request: Request, call_next):
             method=request.method,
             path=request.url.path,
             user_id=user_id,
+            auth_present=auth_present,
             request_body=request_body,
             response_code=_api_code(response_body),
             response_body=response_body,
@@ -110,7 +113,7 @@ async def api_error_handler(request: Request, exc: ApiError):
 
 @app.exception_handler(RequestValidationError)
 async def validation_error_handler(request: Request, exc: RequestValidationError):
-    return json_response(fail(BAD_REQUEST, "参数缺失或格式错误", exc.errors()))
+    return json_response(fail(BAD_REQUEST, _validation_error_message(exc.errors())))
 
 
 @app.exception_handler(Exception)
@@ -125,6 +128,8 @@ def root():
 
 app.include_router(auth.router)
 app.include_router(home.router)
+app.include_router(mine.router)
+app.include_router(notices.router)
 app.include_router(punch.router)
 app.include_router(debug.router)
 
@@ -142,6 +147,34 @@ def _api_code(body: Any) -> int | None:
     if isinstance(body, dict) and isinstance(body.get("code"), int):
         return body["code"]
     return None
+
+
+def _authorization_present(request: Request) -> bool:
+    authorization = request.headers.get("authorization")
+    return bool(authorization and authorization.lower().startswith("bearer ") and authorization[7:].strip())
+
+
+def _validation_error_message(errors: list[dict[str, Any]]) -> str:
+    field_names = {
+        "lat": "纬度",
+        "lng": "经度",
+        "device_id": "设备 ID",
+        "punch_type": "打卡类型",
+    }
+    messages: list[str] = []
+    for error in errors:
+        loc = error.get("loc") or []
+        field = str(loc[-1]) if loc else "参数"
+        label = field_names.get(field, field)
+        error_type = error.get("type")
+        ctx = error.get("ctx") or {}
+        if error_type == "less_than_equal" and "le" in ctx:
+            messages.append(f"{label}不能大于 {ctx['le']}")
+        elif error_type == "greater_than_equal" and "ge" in ctx:
+            messages.append(f"{label}不能小于 {ctx['ge']}")
+        else:
+            messages.append(f"{label}格式错误")
+    return "参数错误：" + "；".join(messages) if messages else "参数缺失或格式错误"
 
 
 def _user_id_from_request(request: Request) -> int | None:

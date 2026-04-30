@@ -60,14 +60,14 @@ public class UserSession {
         mPrefs.edit()
                 .putString(KEY_TOKEN, token)
                 .putString(KEY_USER_INFO, mGson.toJson(userInfo))
-                .apply();
+                .commit();
     }
 
     /** 登出或 Token 过期时清除会话 */
     public void clearSession() {
         mToken = null;
         mUserInfo = null;
-        mPrefs.edit().clear().apply();
+        mPrefs.edit().clear().commit();
     }
 
     public String getToken() { return mToken; }

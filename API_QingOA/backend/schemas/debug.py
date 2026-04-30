@@ -18,3 +18,7 @@ class ScenarioRequest(BaseModel):
 class FreezeTimeRequest(BaseModel):
     datetime: str = Field(pattern=r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$")
 
+
+class ResetTodayPunchRequest(BaseModel):
+    username: str | None = None
+    user_id: int | None = None

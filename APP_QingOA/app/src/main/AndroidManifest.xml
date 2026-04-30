@@ -42,9 +42,24 @@
             android:name=".ui.main.MainActivity"
             android:exported="false" />
 
-        <!-- 打卡页 -->
+        <!-- v1.5A：考勤打卡页（上/下班双卡） -->
         <activity
             android:name=".ui.punch.PunchCardActivity"
+            android:exported="false" />
+
+        <!-- v1.5A：打卡记录列表页 -->
+        <activity
+            android:name=".ui.punch.PunchRecordListActivity"
+            android:exported="false" />
+
+        <!-- v1.5A：打卡详情页 -->
+        <activity
+            android:name=".ui.punch.PunchRecordDetailActivity"
+            android:exported="false" />
+
+        <!-- v1.5A：通知详情页（由 HomeFragment 公告列表点击进入，不依赖菜单 enabled） -->
+        <activity
+            android:name=".ui.home.NoticeDetailActivity"
             android:exported="false" />
 
     </application>

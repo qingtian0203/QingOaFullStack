@@ -114,6 +114,7 @@ def add_request_log(
     method: str,
     path: str,
     user_id: int | None,
+    auth_present: bool,
     request_body: Any,
     response_code: int | None,
     response_body: Any,
@@ -126,6 +127,7 @@ def add_request_log(
         "method": method.upper(),
         "path": path,
         "user_id": user_id,
+        "auth_present": auth_present,
         "request_body": _mask_sensitive(request_body),
         "response_code": response_code,
         "response_body": response_body,
@@ -149,4 +151,3 @@ def _mask_sensitive(value: Any) -> Any:
     if isinstance(value, list):
         return [_mask_sensitive(item) for item in value]
     return value
-

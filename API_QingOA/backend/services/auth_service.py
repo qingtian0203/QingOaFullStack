@@ -57,4 +57,3 @@ def require_valid_user(db: Session, token: str | None) -> User:
     if user.token_expires_at is None or user.token_expires_at < time_provider.now():
         raise ApiError(INVALID_TOKEN, "Token 已过期，请重新登录")
     return user
-

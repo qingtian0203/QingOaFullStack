@@ -11,8 +11,8 @@ from backend.core.response import ok
 from backend.db.database import create_tables, get_db
 from backend.db.models import PunchRecord, User
 from backend.db.seed import reset_database
-from backend.schemas.debug import FreezeTimeRequest, ScenarioRequest
-from backend.services import debug_service
+from backend.schemas.debug import FreezeTimeRequest, ResetTodayPunchRequest, ScenarioRequest
+from backend.services import debug_service, punch_service
 
 router = APIRouter(prefix="/debug", tags=["debug"])
 
@@ -62,8 +62,7 @@ def state(db: Session = Depends(get_db)):
     start, end = _today_range()
     today_records = db.scalars(
         select(PunchRecord)
-        .where(PunchRecord.punch_time >= start)
-        .where(PunchRecord.punch_time <= end)
+        .where(PunchRecord.punch_date == time_provider.now().date().isoformat())
         .order_by(PunchRecord.punch_time.desc())
     ).all()
     return ok(
@@ -79,6 +78,8 @@ def state(db: Session = Depends(get_db)):
             "today_punch_records": [
                 {
                     "user_id": row.user_id,
+                    "punch_type": row.punch_type,
+                    "punch_date": row.punch_date,
                     "punch_time": time_provider.fmt(row.punch_time),
                     "distance": row.distance,
                 }
@@ -94,6 +95,13 @@ def state(db: Session = Depends(get_db)):
 @router.get("/requests")
 def requests():
     return ok({"requests": debug_service.list_request_logs()})
+
+
+@router.post("/punch/reset-today")
+def reset_today_punch(body: ResetTodayPunchRequest | None = None, db: Session = Depends(get_db)):
+    body = body or ResetTodayPunchRequest()
+    deleted_count = punch_service.reset_today(db, username=body.username, user_id=body.user_id)
+    return ok({"deleted_count": deleted_count}, msg="今日打卡已重置")
 
 
 @router.post("/freeze-time")

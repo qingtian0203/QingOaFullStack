@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+import os
+from pathlib import Path
+from tempfile import gettempdir
+
+TEST_DB = Path(gettempdir()) / "qing_oa_v1_test.db"
+if TEST_DB.exists():
+    TEST_DB.unlink()
+os.environ["QINGOA_DATABASE_URL"] = f"sqlite:///{TEST_DB}"
+
 from fastapi.testclient import TestClient
 
 from backend.app import app
@@ -14,7 +23,7 @@ def reset():
     assert res.json()["code"] == 0
 
 
-def login(username="admin", password="123456"):
+def login(username="konglingjia", password="123456"):
     res = client.post("/api/auth/login", json={"username": username, "password": password})
     assert res.status_code == 200
     body = res.json()
@@ -29,10 +38,10 @@ def auth(token):
 def test_login_user_info_and_home_menu():
     reset()
     token, data = login()
-    assert data["username"] == "admin"
+    assert data["username"] == "konglingjia"
 
     res = client.get("/api/auth/user-info", headers=auth(token))
-    assert res.json()["data"]["name"] == "张三"
+    assert res.json()["data"]["name"] == "晴天"
 
     res = client.get("/api/home/menu", headers=auth(token))
     body = res.json()
@@ -41,37 +50,194 @@ def test_login_user_info_and_home_menu():
     assert menus[0]["enabled"] is True
     assert menus[1]["enabled"] is False
     assert menus[1]["disabled_reason"] == "功能开发中"
+    assert all(menu.get("target") != "PunchRecordListActivity" for menu in menus)
+
+    res = client.get("/api/mine/menu", headers=auth(token))
+    body = res.json()
+    assert body["code"] == 0
+    mine_menus = body["data"]["menus"]
+    assert mine_menus[0]["target"] == "PunchRecordListActivity"
+    assert mine_menus[1]["target"] == "OkrListActivity"
+
+
+def test_repeated_login_replaces_active_token():
+    reset()
+    first_token, _ = login("konglingjia")
+    second_token, _ = login("konglingjia")
+    assert second_token != first_token
+
+    res = client.get("/api/auth/user-info", headers=auth(first_token))
+    assert res.json()["code"] == 1002
+
+    res = client.get("/api/auth/user-info", headers=auth(second_token))
+    assert res.json()["code"] == 0
 
 
 def test_success_clock_in_and_debug_state():
     reset()
-    token, data = login("admin")
+    token, data = login("konglingjia")
 
     res = client.post(
-        "/api/punch/clock-in",
+        "/api/punch/clock",
         headers=auth(token),
-        json={"lat": 39.9042, "lng": 116.4074, "device_id": "android_device_001"},
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
     )
     body = res.json()
     assert body["code"] == 0
-    assert body["msg"] == "打卡成功"
-    assert body["data"]["point_name"] == "总部大楼"
+    assert body["msg"] == "上班打卡成功"
+    assert body["data"]["point_name"] == "晴天打卡点"
+    assert body["data"]["updated"] is False
+
+    status = client.get("/api/punch/today-status", headers=auth(token)).json()["data"]
+    assert status["clock_in"]["done"] is True
+    assert status["clock_out"]["done"] is False
+    assert status["has_punched"] is True
 
     state = client.get("/debug/state").json()["data"]
-    assert any(row["user_id"] == data["user_id"] for row in state["today_punch_records"])
+    assert any(
+        row["user_id"] == data["user_id"] and row["punch_type"] == "clock_in"
+        for row in state["today_punch_records"]
+    )
 
     logs = client.get("/debug/requests").json()["data"]["requests"]
-    assert logs[0]["path"] == "/api/punch/clock-in"
-    assert logs[0]["response_code"] == 0
+    clock_log = next(row for row in logs if row["path"] == "/api/punch/clock")
+    assert clock_log["auth_present"] is True
+    assert clock_log["response_code"] == 0
+
+
+def test_clock_out_updates_today_record():
+    reset()
+    client.post("/debug/freeze-time", json={"datetime": "2026-04-30 09:01:00"})
+    token, data = login("konglingjia")
+
+    first = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
+    ).json()
+    assert first["code"] == 0
+    assert first["msg"] == "上班打卡成功"
+
+    duplicate_clock_in = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
+    ).json()
+    assert duplicate_clock_in["code"] == 1008
+
+    client.post("/debug/freeze-time", json={"datetime": "2026-04-30 18:22:33"})
+    second = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811800,
+            "lng": 116.295260,
+            "device_id": "android_device_002",
+            "punch_type": "clock_out",
+        },
+    ).json()
+    assert second["code"] == 0
+    assert second["msg"] == "下班打卡成功"
+    assert second["data"]["updated"] is False
+    assert second["data"]["punch_time"] == "2026-04-30 18:22:33"
+
+    client.post("/debug/freeze-time", json={"datetime": "2026-04-30 21:15:00"})
+    updated = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811800,
+            "lng": 116.295260,
+            "device_id": "android_device_003",
+            "punch_type": "clock_out",
+        },
+    ).json()
+    assert updated["code"] == 0
+    assert updated["msg"] == "下班打卡时间已更新"
+    assert updated["data"]["updated"] is True
+    assert updated["data"]["punch_id"] == second["data"]["punch_id"]
+    assert updated["data"]["punch_time"] == "2026-04-30 21:15:00"
+
+    state = client.get("/debug/state").json()["data"]
+    rows = [row for row in state["today_punch_records"] if row["user_id"] == data["user_id"]]
+    assert len(rows) == 2
+    assert any(row["punch_type"] == "clock_in" for row in rows)
+    assert any(row["punch_type"] == "clock_out" and row["punch_time"] == "2026-04-30 21:15:00" for row in rows)
+
+    records = client.get("/api/punch/records", headers=auth(token)).json()["data"]
+    assert records["total"] == 2
+    assert records["page"] == 1
+    assert records["size"] == 10
+    assert records["list"][0]["punch_type"] == "clock_out"
+    detail = client.get(f"/api/punch/records/{updated['data']['punch_id']}", headers=auth(token)).json()
+    assert detail["code"] == 0
+    assert detail["data"]["device_id"] == "android_device_003"
+
+
+def test_clock_out_requires_clock_in():
+    reset()
+    token, _ = login("konglingjia")
+    res = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_out",
+        },
+    )
+    assert res.json()["code"] == 1007
+    assert client.get("/debug/state").json()["data"]["today_punch_records"] == []
+
+
+def test_reset_today_punch_by_username():
+    reset()
+    token, _ = login("konglingjia")
+    client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
+    )
+    res = client.post("/debug/punch/reset-today", json={"username": "konglingjia"})
+    body = res.json()
+    assert body["code"] == 0
+    assert body["data"]["deleted_count"] == 1
+    assert client.get("/debug/state").json()["data"]["today_punch_records"] == []
 
 
 def test_faraday_out_of_range_no_record():
     reset()
     token, data = login("faraday")
     res = client.post(
-        "/api/punch/clock-in",
+        "/api/punch/clock",
         headers=auth(token),
-        json={"lat": 39.8000, "lng": 116.2000, "device_id": "android_device_001"},
+        json={
+            "lat": 39.8000,
+            "lng": 116.2000,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
     )
     body = res.json()
     assert body["code"] == 1004
@@ -81,9 +247,24 @@ def test_faraday_out_of_range_no_record():
     assert not any(row["user_id"] == data["user_id"] for row in state["today_punch_records"])
 
 
+def test_invalid_coordinate_returns_business_error_without_data_shape():
+    reset()
+    token, _ = login("konglingjia")
+    res = client.post(
+        "/api/punch/clock",
+        headers=auth(token),
+        json={"lat": 100, "lng": 60, "device_id": "android_device_001", "punch_type": "clock_in"},
+    )
+    body = res.json()
+    assert res.status_code == 200
+    assert body["code"] == 1003
+    assert "纬度不能大于" in body["msg"]
+    assert body["data"] is None
+
+
 def test_injected_token_expired_for_user_info():
     reset()
-    token, data = login("admin")
+    token, data = login("konglingjia")
     res = client.post(
         "/debug/inject-scenario",
         json={
@@ -103,14 +284,28 @@ def test_injected_token_expired_for_user_info():
     assert normal["code"] == 0
 
 
+def test_notice_detail():
+    reset()
+    token, _ = login("konglingjia")
+    res = client.get("/api/notices/1", headers=auth(token))
+    body = res.json()
+    assert body["code"] == 0
+    assert body["data"]["title"] == "关于春节放假安排的通知"
+    assert "交接事项" in body["data"]["content"]
+
+
 def test_freeze_time_affects_clock_in_time():
     reset()
     client.post("/debug/freeze-time", json={"datetime": "2026-04-29 09:05:00"})
-    token, _ = login("admin")
+    token, _ = login("konglingjia")
     res = client.post(
-        "/api/punch/clock-in",
+        "/api/punch/clock",
         headers=auth(token),
-        json={"lat": 39.9042, "lng": 116.4074, "device_id": "android_device_001"},
+        json={
+            "lat": 39.811774,
+            "lng": 116.295234,
+            "device_id": "android_device_001",
+            "punch_type": "clock_in",
+        },
     )
     assert res.json()["data"]["punch_time"] == "2026-04-29 09:05:00"
-

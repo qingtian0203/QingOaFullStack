@@ -44,7 +44,7 @@ http://<Mac 局域网 IP>:8010
 
 | 账号 | 密码 | 说明 |
 |---|---|---|
-| `admin` | `123456` | 正常员工，有打卡权限 |
+| `konglingjia` | `123456` | 正常员工，有打卡权限，展示名为晴天 |
 | `nopunch` | `123456` | 无打卡权限 |
 | `expired` | `123456` | 正常账号，Token 过期场景通过注入实现 |
 | `faraday` | `123456` | 正常员工，超范围打卡由 App 测试模式上报远处坐标实现 |
@@ -55,10 +55,16 @@ http://<Mac 局域网 IP>:8010
 - `POST /api/auth/logout`
 - `GET /api/auth/user-info`
 - `GET /api/home/menu`
+- `GET /api/mine/menu`
 - `GET /api/home/notices`
+- `GET /api/notices/{id}`
 - `GET /api/punch/today-status`
+- `POST /api/punch/clock`
 - `POST /api/punch/clock-in`
 - `GET /api/punch/records`
+- `GET /api/punch/records/{id}`
+
+`/api/punch/clock-in` 为 v1 兼容接口，v1.5 App 请使用 `/api/punch/clock` 并传 `punch_type=clock_in|clock_out`。
 
 ## 调试接口
 
@@ -71,6 +77,7 @@ http://<Mac 局域网 IP>:8010
 - `DELETE /debug/scenarios/{id}`
 - `GET /debug/state`
 - `GET /debug/requests`
+- `POST /debug/punch/reset-today`
 - `POST /debug/freeze-time`
 - `DELETE /debug/freeze-time`
 
@@ -78,4 +85,12 @@ http://<Mac 局域网 IP>:8010
 
 ```bash
 pytest
+```
+
+测试会自动使用临时 SQLite 库，不会重置正在联调的 `data/qing_oa_v1.db`。
+
+如需手动指定数据库，可设置：
+
+```bash
+QINGOA_DATABASE_URL=sqlite:////tmp/qing_oa_v1_debug.db python run.py
 ```
