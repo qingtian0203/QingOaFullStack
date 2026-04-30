@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="oa_bg">#F6F7FB</color>
+    <color name="oa_surface">#FFFFFFFF</color>
+    <color name="oa_primary">#4263EB</color>
+    <color name="oa_primary_dark">#2F46C6</color>
+    <color name="oa_primary_soft">#EEF2FF</color>
+    <color name="oa_accent">#14B8A6</color>
+    <color name="oa_text_primary">#182033</color>
+    <color name="oa_text_secondary">#737C8F</color>
+    <color name="oa_text_muted">#A8AFBD</color>
+    <color name="oa_divider">#E9ECF2</color>
+    <color name="oa_danger">#D9485A</color>
+</resources>
