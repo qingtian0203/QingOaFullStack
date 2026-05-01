@@ -6,10 +6,12 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from backend.core.security import hash_password
-from .models import Menu, Notice, PunchPoint, PunchRecord, User
+from .models import KeyResult, Menu, Notice, Okr, PunchPoint, PunchRecord, User
 
 
 def reset_database(db: Session) -> None:
+    db.execute(delete(KeyResult))
+    db.execute(delete(Okr))
     db.execute(delete(PunchRecord))
     db.execute(delete(Menu))
     db.execute(delete(Notice))
@@ -19,7 +21,12 @@ def reset_database(db: Session) -> None:
         text("SELECT name FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'")
     ).scalar()
     if has_sequence:
-        db.execute(text("DELETE FROM sqlite_sequence WHERE name IN ('users','punch_points','punch_records','notices','menus')"))
+        db.execute(
+            text(
+                "DELETE FROM sqlite_sequence "
+                "WHERE name IN ('users','punch_points','punch_records','notices','menus','okrs','key_results')"
+            )
+        )
     db.commit()
 
     password = hash_password("123456")
@@ -108,18 +115,10 @@ def reset_database(db: Session) -> None:
             disabled_reason=None,
             sort_order=1,
         ),
-        Menu(
-            name="OKR 目标",
-            icon="ic_okr",
-            action="native",
-            target="OkrListActivity",
-            section="mine",
-            enabled=0,
-            disabled_reason="v1.5B 开放",
-            sort_order=2,
-        ),
     ]
     db.add_all(menus)
+    db.flush()
+    seed_okrs(db, users)
     db.commit()
 
 
@@ -173,17 +172,8 @@ def ensure_v15_static_data(db: Session) -> None:
             "disabled_reason": None,
             "sort_order": 1,
         },
-        {
-            "name": "OKR 目标",
-            "icon": "ic_okr",
-            "action": "native",
-            "target": "OkrListActivity",
-            "section": "mine",
-            "enabled": 0,
-            "disabled_reason": "v1.5B 开放",
-            "sort_order": 2,
-        },
     ]
+    db.execute(delete(Menu).where(Menu.section == "mine").where(Menu.target == "OkrListActivity"))
     for spec in menu_specs:
         row = db.scalar(select(Menu).where(Menu.name == spec["name"]).where(Menu.section == spec["section"]))
         if row is None:
@@ -191,4 +181,56 @@ def ensure_v15_static_data(db: Session) -> None:
             db.add(row)
         for key, value in spec.items():
             setattr(row, key, value)
+    users = db.scalars(select(User).order_by(User.id.asc())).all()
+    if users and (db.scalar(select(func.count(Okr.id))) or 0) == 0:
+        seed_okrs(db, users)
     db.commit()
+
+
+def seed_okrs(db: Session, users: list[User]) -> None:
+    user_map = {user.username: user for user in users}
+    owner = user_map.get("konglingjia")
+    faraday = user_map.get("faraday")
+    if owner is not None:
+        tech_okr = Okr(
+            user_id=owner.id,
+            title="Q2 技术能力提升",
+            description="通过系统性学习和实战交付提升移动 OA 全栈能力。",
+            period="2026-Q2",
+            status="active",
+            created_at=datetime(2026, 4, 1, 9, 0, 0),
+            updated_at=datetime(2026, 4, 1, 9, 0, 0),
+        )
+        tech_okr.key_results = [
+            KeyResult(title="完成 3 个项目后端", target_value=3, current_value=1, unit="个"),
+            KeyResult(title="沉淀 5 条自动化测试链路", target_value=5, current_value=2, unit="条"),
+            KeyResult(title="学习 FastAPI 最佳实践", target_value=100, current_value=60, unit="%"),
+        ]
+        delivery_okr = Okr(
+            user_id=owner.id,
+            title="Q2 自动化测试闭环",
+            description="让 App、接口和调试工具形成可重复验证的演示闭环。",
+            period="2026-Q2",
+            status="active",
+            created_at=datetime(2026, 4, 2, 9, 0, 0),
+            updated_at=datetime(2026, 4, 2, 9, 0, 0),
+        )
+        delivery_okr.key_results = [
+            KeyResult(title="覆盖登录与打卡核心用例", target_value=4, current_value=3, unit="个"),
+            KeyResult(title="补齐调试接口日志", target_value=100, current_value=100, unit="%"),
+        ]
+        db.add_all([tech_okr, delivery_okr])
+    if faraday is not None:
+        faraday_okr = Okr(
+            user_id=faraday.id,
+            title="外勤坐标测试",
+            description="用于验证 OKR 权限隔离，konglingjia 不应访问。",
+            period="2026-Q2",
+            status="active",
+            created_at=datetime(2026, 4, 3, 9, 0, 0),
+            updated_at=datetime(2026, 4, 3, 9, 0, 0),
+        )
+        faraday_okr.key_results = [
+            KeyResult(title="完成远距离打卡验证", target_value=1, current_value=0, unit="次"),
+        ]
+        db.add(faraday_okr)

@@ -23,6 +23,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     punch_records: Mapped[list["PunchRecord"]] = relationship(back_populates="user")
+    okrs: Mapped[list["Okr"]] = relationship(back_populates="user")
 
 
 class PunchPoint(Base):
@@ -80,3 +81,38 @@ class Menu(Base):
     enabled: Mapped[int] = mapped_column(Integer, default=1)
     disabled_reason: Mapped[str | None] = mapped_column(String, nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+
+
+class Okr(Base):
+    __tablename__ = "okrs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    period: Mapped[str] = mapped_column(String, nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String, default="active", nullable=False, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    user: Mapped[User] = relationship(back_populates="okrs")
+    key_results: Mapped[list["KeyResult"]] = relationship(
+        back_populates="okr",
+        cascade="all, delete-orphan",
+        order_by="KeyResult.id",
+    )
+
+
+class KeyResult(Base):
+    __tablename__ = "key_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    okr_id: Mapped[int] = mapped_column(ForeignKey("okrs.id"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    target_value: Mapped[float] = mapped_column(Float, nullable=False)
+    current_value: Mapped[float] = mapped_column(Float, default=0, nullable=False)
+    unit: Mapped[str] = mapped_column(String, default="%", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+    okr: Mapped[Okr] = relationship(back_populates="key_results")

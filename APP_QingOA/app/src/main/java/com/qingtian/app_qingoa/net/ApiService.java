@@ -4,6 +4,10 @@ import com.qingtian.app_qingoa.model.LoginData;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.NoticeDetailData;
 import com.qingtian.app_qingoa.model.NoticeListData;
+import com.qingtian.app_qingoa.model.OkrCreateResultData;
+import com.qingtian.app_qingoa.model.OkrDetailData;
+import com.qingtian.app_qingoa.model.OkrListData;
+import com.qingtian.app_qingoa.model.OkrProgressResultData;
 import com.qingtian.app_qingoa.model.PunchRecordDetailData;
 import com.qingtian.app_qingoa.model.PunchRecordListData;
 import com.qingtian.app_qingoa.model.PunchResultData;
@@ -15,6 +19,7 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.PUT;
 import retrofit2.http.Query;
 
 /**
@@ -86,4 +91,22 @@ public interface ApiService {
     /** v1.5A 新增：打卡详情 */
     @GET("api/punch/records/{id}")
     Call<ApiResponse<PunchRecordDetailData>> getPunchRecordDetail(@Path("id") int id);
+
+    // ────────── OKR 模块（v1.5B 新增） ──────────
+
+    @GET("api/okr/list")
+    Call<ApiResponse<OkrListData>> getOkrList(@Query("period") String period);
+
+    @GET("api/okr/{id}")
+    Call<ApiResponse<OkrDetailData>> getOkrDetail(@Path("id") int id);
+
+    @POST("api/okr/create")
+    Call<ApiResponse<OkrCreateResultData>> createOkr(@Body OkrCreateRequest body);
+
+    @PUT("api/okr/{id}/key-results/{krId}")
+    Call<ApiResponse<OkrProgressResultData>> updateKeyResultProgress(
+            @Path("id") int id,
+            @Path("krId") int krId,
+            @Body KrProgressRequest body
+    );
 }

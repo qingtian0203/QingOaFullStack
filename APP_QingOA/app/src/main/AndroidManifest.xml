@@ -62,6 +62,18 @@
             android:name=".ui.home.NoticeDetailActivity"
             android:exported="false" />
 
+        <!-- v1.5B：OKR 列表、详情、创建与 KR 进度更新 -->
+        <activity
+            android:name=".ui.okr.OkrListActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.okr.OkrDetailActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.okr.OkrCreateActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
     </application>
 
 </manifest>

@@ -34,6 +34,7 @@ public class LoginActivity extends BaseActivity {
         mBinding = ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(mBinding.getRoot());
 
+        enableKeyboardAwareScroll(mBinding.scrollContent);
         setupListeners();
     }
 

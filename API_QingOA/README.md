@@ -12,14 +12,15 @@ QingAgent 自动化测试实验靶场后端。目标是提供一套透明、可�
 
 ## 当前版本状态
 
-当前后端支撑 `APP_QingOA` v1.5A：
+当前后端支撑 `APP_QingOA` v1.5B：
 
 - `konglingjia/123456` 为主测试账号，展示名为晴天
 - `faraday/123456` 用于远距离定位异常场景
 - 首页菜单只开放考勤打卡，未实现菜单保持灰显
-- 我的页菜单开放我的打卡记录，OKR 目标先灰显为 `v1.5B 开放`
+- 我的页菜单开放我的打卡记录；OKR 目标由 App 底部 Tab 承载
 - 上班卡每天只允许一次，下班卡允许更新
 - `/api/punch/records` 保持明细接口；App 端按 `punch_date` 聚合成每日考勤卡
+- OKR 支持列表、详情、创建、KR 进度更新、软删除，所有接口按当前 Token 用户隔离
 
 ## 启动
 
@@ -74,6 +75,11 @@ http://<Mac 局域网 IP>:8010
 - `POST /api/punch/clock-in`
 - `GET /api/punch/records`
 - `GET /api/punch/records/{id}`
+- `GET /api/okr/list`
+- `GET /api/okr/{id}`
+- `POST /api/okr/create`
+- `PUT /api/okr/{id}/key-results/{kr_id}`
+- `DELETE /api/okr/{id}`
 
 `/api/punch/clock-in` 为 v1 兼容接口，v1.5 App 请使用 `/api/punch/clock` 并传 `punch_type=clock_in|clock_out`。
 
@@ -87,6 +93,17 @@ http://<Mac 局域网 IP>:8010
 | 下班打卡成功 | 生成 `punch_type=clock_out` 记录 |
 | 重复下班打卡 | 更新当天下班记录，返回 `updated=true` |
 | 超范围打卡 | 返回 `1004`，不生成记录，请看 `/debug/requests` 中的坐标日志 |
+
+### v1.5B OKR 规则
+
+| 场景 | 行为 |
+|---|---|
+| 查询 OKR 列表 | `GET /api/okr/list`，可选 `period` |
+| 查询详情 | 返回 OKR 基础信息与 `key_results` |
+| 创建 OKR | `key_results` 至少 1 条，`target_value` 必须大于 0 |
+| 更新 KR 进度 | `current_value` 可超过 `target_value`，单条进度封顶 100 |
+| 访问他人 OKR | 返回 `1010` |
+| 删除 OKR | 软删除，`status=cancelled`，列表和详情不再返回 |
 
 ## 调试接口
 

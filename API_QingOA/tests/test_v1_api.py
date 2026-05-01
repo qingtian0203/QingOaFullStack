@@ -56,10 +56,9 @@ def test_login_user_info_and_home_menu():
     body = res.json()
     assert body["code"] == 0
     mine_menus = body["data"]["menus"]
+    assert len(mine_menus) == 1
     assert mine_menus[0]["target"] == "PunchRecordListActivity"
-    assert mine_menus[1]["target"] == "OkrListActivity"
-    assert mine_menus[1]["enabled"] is False
-    assert mine_menus[1]["disabled_reason"] == "v1.5B 开放"
+    assert all(menu["target"] != "OkrListActivity" for menu in mine_menus)
 
 
 def test_repeated_login_replaces_active_token():
@@ -311,3 +310,79 @@ def test_freeze_time_affects_clock_in_time():
         },
     )
     assert res.json()["data"]["punch_time"] == "2026-04-29 09:05:00"
+
+
+def test_okr_list_detail_create_and_progress_update():
+    reset()
+    token, _ = login("konglingjia")
+
+    initial = client.get("/api/okr/list", headers=auth(token)).json()
+    assert initial["code"] == 0
+    assert len(initial["data"]["list"]) >= 2
+    first = initial["data"]["list"][0]
+    assert first["progress"] >= 0
+    assert first["kr_count"] >= 1
+
+    detail = client.get(f"/api/okr/{first['id']}", headers=auth(token)).json()
+    assert detail["code"] == 0
+    assert detail["data"]["id"] == first["id"]
+    assert detail["data"]["key_results"]
+
+    created = client.post(
+        "/api/okr/create",
+        headers=auth(token),
+        json={
+            "title": "Q2 接口自动化",
+            "description": "为透明 OA 补齐可追踪的接口用例",
+            "period": "2026-Q2",
+            "key_results": [
+                {"title": "覆盖 OKR 核心接口", "target_value": 5, "unit": "个"},
+                {"title": "完成 App 联调", "target_value": 100, "unit": "%"},
+            ],
+        },
+    ).json()
+    assert created["code"] == 0
+    created_id = created["data"]["id"]
+
+    created_detail = client.get(f"/api/okr/{created_id}", headers=auth(token)).json()["data"]
+    assert created_detail["progress"] == 0
+    kr_id = created_detail["key_results"][0]["id"]
+
+    updated = client.put(
+        f"/api/okr/{created_id}/key-results/{kr_id}",
+        headers=auth(token),
+        json={"current_value": 6},
+    ).json()
+    assert updated["code"] == 0
+    assert updated["data"]["kr_progress"] == 100
+    assert updated["data"]["okr_progress"] == 50
+
+
+def test_okr_rejects_empty_key_results_and_cross_user_access():
+    reset()
+    token, _ = login("konglingjia")
+    faraday_token, _ = login("faraday")
+
+    invalid = client.post(
+        "/api/okr/create",
+        headers=auth(token),
+        json={"title": "无 KR 目标", "period": "2026-Q2", "key_results": []},
+    ).json()
+    assert invalid["code"] == 1003
+
+    faraday_list = client.get("/api/okr/list", headers=auth(faraday_token)).json()["data"]["list"]
+    assert faraday_list
+    blocked = client.get(f"/api/okr/{faraday_list[0]['id']}", headers=auth(token)).json()
+    assert blocked["code"] == 1010
+
+
+def test_okr_delete_soft_cancels_item():
+    reset()
+    token, _ = login("konglingjia")
+    okr_id = client.get("/api/okr/list", headers=auth(token)).json()["data"]["list"][0]["id"]
+
+    deleted = client.delete(f"/api/okr/{okr_id}", headers=auth(token)).json()
+    assert deleted["code"] == 0
+
+    detail = client.get(f"/api/okr/{okr_id}", headers=auth(token)).json()
+    assert detail["code"] == 1010

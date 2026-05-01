@@ -109,7 +109,6 @@ public class HomeFragment extends Fragment {
                 startActivity(new Intent(requireContext(), PunchRecordListActivity.class));
                 break;
             default:
-                // 白名单内但 App 尚未实现的页面（如 OkrListActivity 等 v1.5B 的）
                 ToastUtils.show(requireContext(), "功能开发中");
                 break;
         }

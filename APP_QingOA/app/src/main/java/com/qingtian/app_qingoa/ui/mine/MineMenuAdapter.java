@@ -64,9 +64,6 @@ public class MineMenuAdapter extends RecyclerView.Adapter<MineMenuAdapter.ViewHo
         if ("PunchRecordListActivity".equals(target)) {
             return "查看上班、下班和更新记录";
         }
-        if ("OkrListActivity".equals(target)) {
-            return "目标进度与关键结果";
-        }
         return "进入功能";
     }
 

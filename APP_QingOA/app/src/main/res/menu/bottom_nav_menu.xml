@@ -2,10 +2,14 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
         android:id="@+id/nav_home"
-        android:icon="@android:drawable/ic_menu_today"
+        android:icon="@drawable/ic_nav_home"
         android:title="首页" />
     <item
+        android:id="@+id/nav_okr"
+        android:icon="@drawable/ic_nav_okr"
+        android:title="OKR" />
+    <item
         android:id="@+id/nav_mine"
-        android:icon="@android:drawable/ic_menu_myplaces"
+        android:icon="@drawable/ic_nav_mine"
         android:title="我的" />
 </menu>
