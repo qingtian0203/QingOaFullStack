@@ -51,10 +51,26 @@ def migrate_existing_sqlite_schema() -> None:
         if menu_columns and "section" not in menu_columns:
             conn.execute(text("ALTER TABLE menus ADD COLUMN section TEXT NOT NULL DEFAULT 'home'"))
 
+        user_columns = _column_names(conn, "users")
+        if user_columns:
+            _ensure_column(conn, user_columns, "users", "avatar_url", "TEXT DEFAULT NULL")
+            _ensure_column(conn, user_columns, "users", "phone", "TEXT DEFAULT NULL")
+            _ensure_column(conn, user_columns, "users", "email", "TEXT DEFAULT NULL")
+            _ensure_column(conn, user_columns, "users", "office_location", "TEXT DEFAULT NULL")
+            _ensure_column(conn, user_columns, "users", "manager_id", "INTEGER DEFAULT NULL")
+            _ensure_column(conn, user_columns, "users", "is_hr", "INTEGER NOT NULL DEFAULT 0")
+
 
 def _column_names(conn, table_name: str) -> set[str]:
     rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
     return {row[1] for row in rows}
+
+
+def _ensure_column(conn, columns: set[str], table_name: str, column_name: str, definition: str) -> None:
+    if column_name in columns:
+        return
+    conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_name} {definition}"))
+    columns.add(column_name)
 
 
 def get_db():

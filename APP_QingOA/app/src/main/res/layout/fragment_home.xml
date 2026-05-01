@@ -154,6 +154,7 @@
                     android:textStyle="bold" />
 
                 <TextView
+                    android:id="@+id/tv_unread_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_soft_blue"
@@ -161,7 +162,7 @@
                     android:paddingTop="4dp"
                     android:paddingEnd="10dp"
                     android:paddingBottom="4dp"
-                    android:text="最新"
+                    android:text="未读 --"
                     android:textColor="@color/oa_primary"
                     android:textSize="12sp" />
             </LinearLayout>

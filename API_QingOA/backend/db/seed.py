@@ -6,13 +6,14 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from backend.core.security import hash_password
-from .models import KeyResult, Menu, Notice, Okr, PunchPoint, PunchRecord, User
+from .models import KeyResult, Menu, Notice, NoticeRead, Okr, PunchPoint, PunchRecord, User
 
 
 def reset_database(db: Session) -> None:
     db.execute(delete(KeyResult))
     db.execute(delete(Okr))
     db.execute(delete(PunchRecord))
+    db.execute(delete(NoticeRead))
     db.execute(delete(Menu))
     db.execute(delete(Notice))
     db.execute(delete(PunchPoint))
@@ -24,19 +25,93 @@ def reset_database(db: Session) -> None:
         db.execute(
             text(
                 "DELETE FROM sqlite_sequence "
-                "WHERE name IN ('users','punch_points','punch_records','notices','menus','okrs','key_results')"
+                "WHERE name IN ('users','punch_points','punch_records','notice_reads','notices','menus','okrs','key_results')"
             )
         )
     db.commit()
 
     password = hash_password("123456")
     users = [
-        User(username="konglingjia", password=password, name="晴天", dept="技术部", role="员工", has_punch_permission=1),
-        User(username="nopunch", password=password, name="李四", dept="行政部", role="员工", has_punch_permission=0),
-        User(username="expired", password=password, name="王五", dept="测试部", role="员工", has_punch_permission=1),
-        User(username="faraday", password=password, name="法拉第", dept="外勤部", role="员工", has_punch_permission=1),
+        User(
+            username="konglingjia",
+            password=password,
+            name="晴天",
+            dept="技术部",
+            role="员工",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000001",
+            email="konglingjia@qingoa.local",
+            office_location="北京总部",
+        ),
+        User(
+            username="nopunch",
+            password=password,
+            name="李四",
+            dept="行政部",
+            role="员工",
+            has_punch_permission=0,
+            avatar_url="",
+            phone="13800000002",
+            email="nopunch@qingoa.local",
+            office_location="北京总部",
+        ),
+        User(
+            username="expired",
+            password=password,
+            name="王五",
+            dept="测试部",
+            role="员工",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000003",
+            email="expired@qingoa.local",
+            office_location="北京总部",
+        ),
+        User(
+            username="faraday",
+            password=password,
+            name="法拉第",
+            dept="外勤部",
+            role="员工",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000004",
+            email="faraday@qingoa.local",
+            office_location="上海分部",
+        ),
+        User(
+            username="manager",
+            password=password,
+            name="王经理",
+            dept="技术部",
+            role="直属上级",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000005",
+            email="manager@qingoa.local",
+            office_location="北京总部",
+        ),
+        User(
+            username="hr",
+            password=password,
+            name="何人事",
+            dept="人力资源部",
+            role="HR",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000006",
+            email="hr@qingoa.local",
+            office_location="北京总部",
+            is_hr=1,
+        ),
     ]
     db.add_all(users)
+    db.flush()
+    user_map = {user.username: user for user in users}
+    manager = user_map["manager"]
+    for username in ("konglingjia", "faraday", "nopunch", "expired"):
+        user_map[username].manager_id = manager.id
 
     db.add(PunchPoint(name="晴天打卡点", lat=39.811774, lng=116.295234, radius=500, is_active=1))
 
@@ -131,6 +206,7 @@ def seed_if_empty(db: Session) -> None:
 
 
 def ensure_v15_static_data(db: Session) -> None:
+    ensure_v16_users(db)
     menu_specs = [
         {
             "name": "考勤打卡",
@@ -185,6 +261,98 @@ def ensure_v15_static_data(db: Session) -> None:
     if users and (db.scalar(select(func.count(Okr.id))) or 0) == 0:
         seed_okrs(db, users)
     db.commit()
+
+
+def ensure_v16_users(db: Session) -> None:
+    password = hash_password("123456")
+    specs = [
+        {
+            "username": "konglingjia",
+            "name": "晴天",
+            "dept": "技术部",
+            "role": "员工",
+            "has_punch_permission": 1,
+            "phone": "13800000001",
+            "email": "konglingjia@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 0,
+        },
+        {
+            "username": "faraday",
+            "name": "法拉第",
+            "dept": "外勤部",
+            "role": "员工",
+            "has_punch_permission": 1,
+            "phone": "13800000004",
+            "email": "faraday@qingoa.local",
+            "office_location": "上海分部",
+            "is_hr": 0,
+        },
+        {
+            "username": "nopunch",
+            "name": "李四",
+            "dept": "行政部",
+            "role": "员工",
+            "has_punch_permission": 0,
+            "phone": "13800000002",
+            "email": "nopunch@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 0,
+        },
+        {
+            "username": "expired",
+            "name": "王五",
+            "dept": "测试部",
+            "role": "员工",
+            "has_punch_permission": 1,
+            "phone": "13800000003",
+            "email": "expired@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 0,
+        },
+        {
+            "username": "manager",
+            "name": "王经理",
+            "dept": "技术部",
+            "role": "直属上级",
+            "has_punch_permission": 1,
+            "phone": "13800000005",
+            "email": "manager@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 0,
+        },
+        {
+            "username": "hr",
+            "name": "何人事",
+            "dept": "人力资源部",
+            "role": "HR",
+            "has_punch_permission": 1,
+            "phone": "13800000006",
+            "email": "hr@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 1,
+        },
+    ]
+    for spec in specs:
+        user = db.scalar(select(User).where(User.username == spec["username"]))
+        if user is None:
+            user = User(username=spec["username"], password=password)
+            db.add(user)
+        for key, value in spec.items():
+            if key == "username":
+                continue
+            current = getattr(user, key, None)
+            if current in (None, "") or key in {"name", "dept", "role", "has_punch_permission", "is_hr"}:
+                setattr(user, key, value)
+        if user.avatar_url is None:
+            user.avatar_url = ""
+    db.flush()
+    manager = db.scalar(select(User).where(User.username == "manager"))
+    if manager is not None:
+        for username in ("konglingjia", "faraday", "nopunch", "expired"):
+            user = db.scalar(select(User).where(User.username == username))
+            if user is not None:
+                user.manager_id = manager.id
 
 
 def seed_okrs(db: Session, users: list[User]) -> None:

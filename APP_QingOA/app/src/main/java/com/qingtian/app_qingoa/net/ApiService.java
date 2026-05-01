@@ -12,6 +12,7 @@ import com.qingtian.app_qingoa.model.PunchRecordDetailData;
 import com.qingtian.app_qingoa.model.PunchRecordListData;
 import com.qingtian.app_qingoa.model.PunchResultData;
 import com.qingtian.app_qingoa.model.PunchStatusData;
+import com.qingtian.app_qingoa.model.UnreadCountData;
 import com.qingtian.app_qingoa.model.UserInfo;
 
 import retrofit2.Call;
@@ -55,15 +56,35 @@ public interface ApiService {
             @Query("size") int size
     );
 
+    /** v1.6A 新增：当前用户通知未读数 */
+    @GET("api/home/unread-count")
+    Call<ApiResponse<UnreadCountData>> getUnreadCount();
+
     /** v1.5A 新增：通知详情 */
     @GET("api/notices/{id}")
     Call<ApiResponse<NoticeDetailData>> getNoticeDetail(@Path("id") int id);
 
-    // ────────── 我的模块（v1.5A 新增） ──────────
+    /** v1.6A 新增：通知已读，用户维度 */
+    @POST("api/notices/{id}/read")
+    Call<ApiResponse<Void>> markNoticeRead(@Path("id") int id);
+
+    // ────────── 我的模块 ──────────
 
     /** 我的页动态功能入口，字段结构与 home/menu 完全一致 */
     @GET("api/mine/menu")
     Call<ApiResponse<MenuData>> getMineMenu();
+
+    /** v1.6A 新增：我的页完整资料，进入 MineFragment 时刷新 */
+    @GET("api/user/profile")
+    Call<ApiResponse<UserInfo>> getUserProfile();
+
+    /** v1.6A 新增：修改可编辑资料 */
+    @PUT("api/user/profile")
+    Call<ApiResponse<UserInfo>> updateUserProfile(@Body ProfileUpdateRequest body);
+
+    /** v1.6A 新增：更新头像 URL */
+    @POST("api/user/avatar")
+    Call<ApiResponse<UserInfo>> updateAvatar(@Body AvatarUpdateRequest body);
 
     // ────────── 打卡模块 ──────────
 

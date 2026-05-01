@@ -53,6 +53,7 @@ public class NoticeDetailActivity extends BaseActivity {
                             if (body.isTokenExpired()) { handleTokenExpired(); return; }
                             if (body.isSuccess() && body.getData() != null) {
                                 bindDetail(body.getData());
+                                markRead(noticeId);
                             }
                         }
                     }
@@ -70,5 +71,24 @@ public class NoticeDetailActivity extends BaseActivity {
         mBinding.tvNoticeTitle.setText(data.getTitle() != null ? data.getTitle() : "");
         mBinding.tvNoticeTime.setText(data.getCreatedAt() != null ? data.getCreatedAt() : "");
         mBinding.tvNoticeContent.setText(data.getContent() != null ? data.getContent() : "");
+    }
+
+    private void markRead(int noticeId) {
+        ApiClient.getService().markNoticeRead(noticeId)
+                .enqueue(new Callback<ApiResponse<Void>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<Void>> call,
+                                           Response<ApiResponse<Void>> response) {
+                        if (response.isSuccessful() && response.body() != null
+                                && response.body().isTokenExpired()) {
+                            handleTokenExpired();
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<Void>> call, Throwable t) {
+                        // 已读写入失败不影响详情阅读，回到首页会继续显示未读。
+                    }
+                });
     }
 }

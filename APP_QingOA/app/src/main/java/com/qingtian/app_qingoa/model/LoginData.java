@@ -23,6 +23,9 @@ public class LoginData {
     @SerializedName("role")
     private String role;
 
+    @SerializedName("avatar_url")
+    private String avatarUrl;
+
     @SerializedName("has_punch_permission")
     private boolean hasPunchPermission;
 
@@ -32,6 +35,7 @@ public class LoginData {
     public String getName() { return name; }
     public String getDept() { return dept; }
     public String getRole() { return role; }
+    public String getAvatarUrl() { return avatarUrl; }
     public boolean hasPunchPermission() { return hasPunchPermission; }
 
     /** 转换为通用 UserInfo（用于写入 UserSession） */
@@ -44,6 +48,7 @@ public class LoginData {
         info.name = name;
         info.dept = dept;
         info.role = role;
+        info.avatarUrl = avatarUrl;
         info.hasPunchPermission = hasPunchPermission;
         return info;
     }

@@ -20,6 +20,12 @@ class User(Base):
     token: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     has_punch_permission: Mapped[int] = mapped_column(Integer, default=1)
+    avatar_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phone: Mapped[str | None] = mapped_column(String, nullable=True)
+    email: Mapped[str | None] = mapped_column(String, nullable=True)
+    office_location: Mapped[str | None] = mapped_column(String, nullable=True)
+    manager_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    is_hr: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
     punch_records: Mapped[list["PunchRecord"]] = relationship(back_populates="user")
@@ -67,6 +73,16 @@ class Notice(Base):
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     content: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
+
+
+class NoticeRead(Base):
+    __tablename__ = "notice_reads"
+    __table_args__ = (UniqueConstraint("notice_id", "user_id", name="uq_notice_read_user"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    notice_id: Mapped[int] = mapped_column(ForeignKey("notices.id"), nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
+    read_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now)
 
 
 class Menu(Base):

@@ -34,15 +34,33 @@
             android:orientation="horizontal"
             android:padding="22dp">
 
-            <TextView
-                android:layout_width="58dp"
-                android:layout_height="58dp"
+            <FrameLayout
+                android:id="@+id/avatar_container"
+                android:layout_width="62dp"
+                android:layout_height="62dp"
                 android:background="@drawable/bg_avatar"
-                android:gravity="center"
-                android:text="晴"
-                android:textColor="@color/oa_primary"
-                android:textSize="24sp"
-                android:textStyle="bold" />
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackgroundBorderless">
+
+                <ImageView
+                    android:id="@+id/iv_avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="头像"
+                    android:scaleType="centerCrop"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tv_avatar_initial"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:text="晴"
+                    android:textColor="@color/oa_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+            </FrameLayout>
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -86,6 +104,84 @@
                         android:textColor="#EAF1FF"
                         android:textSize="13sp" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_office_location"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="#D8E2FF"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- v1.6A：资料刷新与编辑入口 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="个人资料"
+                android:textColor="@color/oa_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tv_phone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/oa_text_secondary"
+                android:textSize="13sp" />
+
+            <TextView
+                android:id="@+id/tv_email"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:textColor="@color/oa_text_secondary"
+                android:textSize="13sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_edit_profile"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="编辑资料"
+                    android:textColor="@color/oa_primary"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/oa_primary"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_avatar"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="10dp"
+                    android:layout_weight="1"
+                    android:text="头像 URL"
+                    android:textColor="@color/oa_primary"
+                    android:textSize="13sp"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/oa_primary"
+                    app:strokeWidth="1dp" />
             </LinearLayout>
         </LinearLayout>
 
@@ -155,7 +251,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="已登录 QingOA v1.5 演示环境"
+                android:text="已登录 QingOA v1.6A 演示环境"
                 android:textColor="@color/oa_text_secondary"
                 android:textSize="14sp" />
 

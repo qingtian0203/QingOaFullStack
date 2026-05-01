@@ -11,17 +11,23 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
+import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.qingtian.app_qingoa.databinding.DialogAvatarUrlBinding;
+import com.qingtian.app_qingoa.databinding.DialogProfileEditBinding;
 import com.qingtian.app_qingoa.base.BaseActivity;
 import com.qingtian.app_qingoa.databinding.FragmentMineBinding;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.UserInfo;
+import com.qingtian.app_qingoa.net.AvatarUpdateRequest;
 import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
+import com.qingtian.app_qingoa.net.ProfileUpdateRequest;
 import com.qingtian.app_qingoa.session.UserSession;
 import com.qingtian.app_qingoa.ui.auth.LoginActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchRecordListActivity;
 import com.qingtian.app_qingoa.util.AppRouteWhitelist;
+import com.qingtian.app_qingoa.util.AvatarLoader;
 import com.qingtian.app_qingoa.util.ToastUtils;
 
 import retrofit2.Call;
@@ -53,9 +59,18 @@ public class MineFragment extends Fragment {
         showUserInfo(UserSession.getInstance().getUserInfo());
 
         mBinding.btnLogout.setOnClickListener(v -> logout());
+        mBinding.avatarContainer.setOnClickListener(v -> showAvatarDialog());
+        mBinding.btnAvatar.setOnClickListener(v -> showAvatarDialog());
+        mBinding.btnEditProfile.setOnClickListener(v -> showProfileDialog());
 
         // 加载"我的"动态功能入口
         loadMineMenu();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        loadProfile();
     }
 
     private void showUserInfo(UserInfo info) {
@@ -63,6 +78,132 @@ public class MineFragment extends Fragment {
         mBinding.tvName.setText(info.getName() != null ? info.getName() : info.getUsername());
         mBinding.tvDept.setText(info.getDept() != null ? info.getDept() : "");
         mBinding.tvRole.setText(info.getRole() != null ? info.getRole() : "");
+        mBinding.tvAvatarInitial.setText(info.getInitial());
+        mBinding.tvOfficeLocation.setText(prefix("办公地点", info.getOfficeLocation()));
+        mBinding.tvPhone.setText(prefix("手机", info.getPhone()));
+        mBinding.tvEmail.setText(prefix("邮箱", info.getEmail()));
+        AvatarLoader.load(info.getAvatarUrl(), mBinding.ivAvatar, mBinding.tvAvatarInitial);
+    }
+
+    private void loadProfile() {
+        ApiClient.getService().getUserProfile().enqueue(new Callback<ApiResponse<UserInfo>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<UserInfo>> call,
+                                   Response<ApiResponse<UserInfo>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    ApiResponse<UserInfo> body = response.body();
+                    if (body.isTokenExpired()) {
+                        ((BaseActivity) requireActivity()).handleTokenExpired();
+                        return;
+                    }
+                    if (body.isSuccess() && body.getData() != null) {
+                        UserSession.getInstance().updateUserInfo(body.getData());
+                        showUserInfo(body.getData());
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<UserInfo>> call, Throwable t) {
+                // cache-then-network：失败时保留本地缓存，不打扰主流程
+            }
+        });
+    }
+
+    private void showProfileDialog() {
+        UserInfo current = UserSession.getInstance().getUserInfo();
+        DialogProfileEditBinding binding = DialogProfileEditBinding.inflate(getLayoutInflater());
+        binding.etPhone.setText(current != null ? current.getPhone() : "");
+        binding.etEmail.setText(current != null ? current.getEmail() : "");
+        binding.etOfficeLocation.setText(current != null ? current.getOfficeLocation() : "");
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        dialog.setContentView(binding.getRoot());
+        binding.btnSave.setOnClickListener(v -> updateProfile(
+                text(binding.etPhone),
+                text(binding.etEmail),
+                text(binding.etOfficeLocation),
+                dialog
+        ));
+        dialog.show();
+    }
+
+    private void updateProfile(String phone, String email, String officeLocation, BottomSheetDialog dialog) {
+        ApiClient.getService()
+                .updateUserProfile(new ProfileUpdateRequest(phone, email, officeLocation))
+                .enqueue(new Callback<ApiResponse<UserInfo>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<UserInfo>> call,
+                                           Response<ApiResponse<UserInfo>> response) {
+                        if (!isAdded()) return;
+                        if (response.isSuccessful() && response.body() != null) {
+                            ApiResponse<UserInfo> body = response.body();
+                            if (body.isTokenExpired()) {
+                                ((BaseActivity) requireActivity()).handleTokenExpired();
+                                return;
+                            }
+                            if (body.isSuccess() && body.getData() != null) {
+                                UserSession.getInstance().updateUserInfo(body.getData());
+                                showUserInfo(body.getData());
+                                dialog.dismiss();
+                                ToastUtils.show(requireContext(), "资料已更新");
+                                return;
+                            }
+                            ToastUtils.show(requireContext(), body.getMsg());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<UserInfo>> call, Throwable t) {
+                        if (isAdded()) ToastUtils.show(requireContext(), "资料更新失败");
+                    }
+                });
+    }
+
+    private void showAvatarDialog() {
+        UserInfo current = UserSession.getInstance().getUserInfo();
+        DialogAvatarUrlBinding binding = DialogAvatarUrlBinding.inflate(getLayoutInflater());
+        binding.etAvatarUrl.setText(current != null ? current.getAvatarUrl() : "");
+        BottomSheetDialog dialog = new BottomSheetDialog(requireContext());
+        dialog.setContentView(binding.getRoot());
+        binding.btnSaveAvatar.setOnClickListener(v -> updateAvatar(text(binding.etAvatarUrl), dialog));
+        dialog.show();
+    }
+
+    private void updateAvatar(String avatarUrl, BottomSheetDialog dialog) {
+        if (avatarUrl.isEmpty()) {
+            ToastUtils.show(requireContext(), "请输入头像图片地址");
+            return;
+        }
+        ApiClient.getService()
+                .updateAvatar(new AvatarUpdateRequest(avatarUrl))
+                .enqueue(new Callback<ApiResponse<UserInfo>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<UserInfo>> call,
+                                           Response<ApiResponse<UserInfo>> response) {
+                        if (!isAdded()) return;
+                        if (response.isSuccessful() && response.body() != null) {
+                            ApiResponse<UserInfo> body = response.body();
+                            if (body.isTokenExpired()) {
+                                ((BaseActivity) requireActivity()).handleTokenExpired();
+                                return;
+                            }
+                            if (body.isSuccess() && body.getData() != null) {
+                                UserSession.getInstance().updateUserInfo(body.getData());
+                                showUserInfo(body.getData());
+                                dialog.dismiss();
+                                ToastUtils.show(requireContext(), "头像已更新");
+                                return;
+                            }
+                            ToastUtils.show(requireContext(), body.getMsg());
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<UserInfo>> call, Throwable t) {
+                        if (isAdded()) ToastUtils.show(requireContext(), "头像更新失败");
+                    }
+                });
     }
 
     /** 调 /api/mine/menu，字段结构与 home/menu 完全一致，复用 MenuData + MenuAdapter */
@@ -151,6 +292,14 @@ public class MineFragment extends Fragment {
         Intent intent = new Intent(requireContext(), LoginActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+    }
+
+    private String prefix(String label, String value) {
+        return label + "：" + (value != null && !value.isEmpty() ? value : "未填写");
+    }
+
+    private String text(android.widget.EditText editText) {
+        return editText.getText() != null ? editText.getText().toString().trim() : "";
     }
 
     @Override

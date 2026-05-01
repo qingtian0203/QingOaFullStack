@@ -16,6 +16,7 @@ import com.qingtian.app_qingoa.base.BaseActivity;
 import com.qingtian.app_qingoa.databinding.FragmentHomeBinding;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.NoticeListData;
+import com.qingtian.app_qingoa.model.UnreadCountData;
 import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
@@ -49,7 +50,13 @@ public class HomeFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         loadMenu();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
         loadNotices();
+        loadUnreadCount();
     }
 
     private void loadMenu() {
@@ -123,6 +130,10 @@ public class HomeFragment extends Fragment {
                         if (!isAdded()) return;
                         if (response.isSuccessful() && response.body() != null) {
                             ApiResponse<NoticeListData> body = response.body();
+                            if (body.isTokenExpired()) {
+                                ((BaseActivity) requireActivity()).handleTokenExpired();
+                                return;
+                            }
                             if (body.isSuccess() && body.getData() != null
                                     && body.getData().getList() != null) {
                                 setupNoticeList(body.getData());
@@ -135,6 +146,33 @@ public class HomeFragment extends Fragment {
                     public void onFailure(Call<ApiResponse<NoticeListData>> call, Throwable t) {
                         if (isAdded()) mBinding.loadingNotices.setVisibility(View.GONE);
                         // 公告加载失败静默处理，不影响主流程
+                    }
+                });
+    }
+
+    private void loadUnreadCount() {
+        ApiClient.getService().getUnreadCount()
+                .enqueue(new Callback<ApiResponse<UnreadCountData>>() {
+                    @Override
+                    public void onResponse(Call<ApiResponse<UnreadCountData>> call,
+                                           Response<ApiResponse<UnreadCountData>> response) {
+                        if (!isAdded()) return;
+                        if (response.isSuccessful() && response.body() != null) {
+                            ApiResponse<UnreadCountData> body = response.body();
+                            if (body.isTokenExpired()) {
+                                ((BaseActivity) requireActivity()).handleTokenExpired();
+                                return;
+                            }
+                            if (body.isSuccess() && body.getData() != null) {
+                                int count = body.getData().getNoticeUnread();
+                                mBinding.tvUnreadCount.setText(count > 0 ? "未读 " + count : "全部已读");
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Call<ApiResponse<UnreadCountData>> call, Throwable t) {
+                        if (isAdded()) mBinding.tvUnreadCount.setText("未读 --");
                     }
                 });
     }

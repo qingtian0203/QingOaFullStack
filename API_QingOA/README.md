@@ -12,7 +12,7 @@ QingAgent 自动化测试实验靶场后端。目标是提供一套透明、可�
 
 ## 当前版本状态
 
-当前后端支撑 `APP_QingOA` v1.5B：
+当前后端支撑 `APP_QingOA` v1.6A：
 
 - `konglingjia/123456` 为主测试账号，展示名为晴天
 - `faraday/123456` 用于远距离定位异常场景
@@ -21,6 +21,9 @@ QingAgent 自动化测试实验靶场后端。目标是提供一套透明、可�
 - 上班卡每天只允许一次，下班卡允许更新
 - `/api/punch/records` 保持明细接口；App 端按 `punch_date` 聚合成每日考勤卡
 - OKR 支持列表、详情、创建、KR 进度更新、软删除，所有接口按当前 Token 用户隔离
+- 我的页个人资料由 `/api/user/profile` 提供权威数据，`/api/auth/user-info` 只负责启动 Token 校验
+- v1.6A 头像更新仅保存 `avatar_url` 字符串，不做 multipart 文件上传
+- 通知已读按用户维度记录在 `notice_reads`，一个用户已读不影响其他用户
 
 ## 启动
 
@@ -60,6 +63,8 @@ http://<Mac 局域网 IP>:8010
 | `nopunch` | `123456` | 无打卡权限 |
 | `expired` | `123456` | 正常账号，Token 过期场景通过注入实现 |
 | `faraday` | `123456` | 正常员工，超范围打卡由 App 测试模式上报远处坐标实现 |
+| `manager` | `123456` | 直属上级，v1.6B 补卡审批预留账号 |
+| `hr` | `123456` | HR 管理员，v1.6B 二级审批预留账号 |
 
 ## 核心接口
 
@@ -69,7 +74,12 @@ http://<Mac 局域网 IP>:8010
 - `GET /api/home/menu`
 - `GET /api/mine/menu`
 - `GET /api/home/notices`
+- `GET /api/home/unread-count`
 - `GET /api/notices/{id}`
+- `POST /api/notices/{id}/read`
+- `GET /api/user/profile`
+- `PUT /api/user/profile`
+- `POST /api/user/avatar`
 - `GET /api/punch/today-status`
 - `POST /api/punch/clock`
 - `POST /api/punch/clock-in`
@@ -104,6 +114,18 @@ http://<Mac 局域网 IP>:8010
 | 更新 KR 进度 | `current_value` 可超过 `target_value`，单条进度封顶 100 |
 | 访问他人 OKR | 返回 `1010` |
 | 删除 OKR | 软删除，`status=cancelled`，列表和详情不再返回 |
+
+### v1.6A 用户资料与通知已读规则
+
+| 场景 | 行为 |
+|---|---|
+| App 启动校验 | `GET /api/auth/user-info` 返回 profile 子集，返回 `1002` 时跳登录 |
+| 我的页刷新 | `GET /api/user/profile` 返回头像、手机、邮箱、办公地点等完整资料 |
+| 修改资料 | `PUT /api/user/profile` 支持 `phone/email/office_location`，邮箱格式错误返回 `2003` |
+| 修改头像 | `POST /api/user/avatar` 仅传 `avatar_url` 字符串，非法图片 URL 返回 `2001` |
+| 首页公告列表 | `GET /api/home/notices` 返回每条公告的 `is_read` |
+| 打开公告详情 | App 调 `POST /api/notices/{id}/read`，该用户未读数减少 |
+| 多账号隔离 | `notice_reads` 按 `notice_id + user_id` 唯一约束，互不影响 |
 
 ## 调试接口
 

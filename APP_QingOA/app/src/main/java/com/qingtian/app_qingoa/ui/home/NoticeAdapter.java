@@ -42,6 +42,7 @@ public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder
         holder.tvTitle.setText(item.getTitle());
         holder.tvSummary.setText(item.getSummary() != null ? item.getSummary() : "");
         holder.tvTime.setText(item.getCreatedAt() != null ? item.getCreatedAt() : "");
+        holder.tvUnread.setVisibility(item.isRead() ? View.GONE : View.VISIBLE);
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) mListener.onItemClick(item);
         });
@@ -51,13 +52,14 @@ public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder
     public int getItemCount() { return mItems != null ? mItems.size() : 0; }
 
     static class ViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTitle, tvSummary, tvTime;
+        TextView tvTitle, tvSummary, tvTime, tvUnread;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             tvTitle = itemView.findViewById(R.id.tv_title);
             tvSummary = itemView.findViewById(R.id.tv_summary);
             tvTime = itemView.findViewById(R.id.tv_time);
+            tvUnread = itemView.findViewById(R.id.tv_unread);
         }
     }
 }

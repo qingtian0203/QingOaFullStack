@@ -293,6 +293,82 @@ def test_notice_detail():
     assert body["code"] == 0
     assert body["data"]["title"] == "关于春节放假安排的通知"
     assert "交接事项" in body["data"]["content"]
+    assert body["data"]["is_read"] is False
+
+
+def test_user_profile_update_and_avatar():
+    reset()
+    token, _ = login("konglingjia")
+
+    profile = client.get("/api/user/profile", headers=auth(token)).json()
+    assert profile["code"] == 0
+    assert profile["data"]["name"] == "晴天"
+    assert profile["data"]["phone"] == "13800000001"
+
+    updated = client.put(
+        "/api/user/profile",
+        headers=auth(token),
+        json={
+            "phone": "13900001111",
+            "email": "new@example.com",
+            "office_location": "上海分部",
+        },
+    ).json()
+    assert updated["code"] == 0
+    assert updated["data"]["phone"] == "13900001111"
+    assert updated["data"]["email"] == "new@example.com"
+    assert updated["data"]["office_location"] == "上海分部"
+
+    invalid = client.put(
+        "/api/user/profile",
+        headers=auth(token),
+        json={"phone": "13900001111", "email": "not-email", "office_location": "上海分部"},
+    ).json()
+    assert invalid["code"] == 2003
+
+    avatar = client.post(
+        "/api/user/avatar",
+        headers=auth(token),
+        json={"avatar_url": "https://example.com/avatar.png"},
+    ).json()
+    assert avatar["code"] == 0
+    assert avatar["data"]["avatar_url"] == "https://example.com/avatar.png"
+
+    invalid_avatar = client.post(
+        "/api/user/avatar",
+        headers=auth(token),
+        json={"avatar_url": "ftp://example.com/avatar.txt"},
+    ).json()
+    assert invalid_avatar["code"] == 2001
+
+    user_info = client.get("/api/auth/user-info", headers=auth(token)).json()["data"]
+    assert user_info["avatar_url"] == "https://example.com/avatar.png"
+
+
+def test_notice_read_is_user_scoped():
+    reset()
+    token, _ = login("konglingjia")
+    faraday_token, _ = login("faraday")
+
+    unread = client.get("/api/home/unread-count", headers=auth(token)).json()
+    assert unread["code"] == 0
+    assert unread["data"]["notice_unread"] == 5
+
+    marked = client.post("/api/notices/1/read", headers=auth(token)).json()
+    assert marked["code"] == 0
+    repeated = client.post("/api/notices/1/read", headers=auth(token)).json()
+    assert repeated["code"] == 0
+
+    notice = client.get("/api/notices/1", headers=auth(token)).json()["data"]
+    assert notice["is_read"] is True
+    list_body = client.get("/api/home/notices", headers=auth(token)).json()["data"]
+    read_item = next(row for row in list_body["list"] if row["id"] == 1)
+    assert read_item["is_read"] is True
+    assert client.get("/api/home/unread-count", headers=auth(token)).json()["data"]["notice_unread"] == 4
+
+    faraday_notice = client.get("/api/notices/1", headers=auth(faraday_token)).json()["data"]
+    assert faraday_notice["is_read"] is False
+    assert client.get("/api/home/unread-count", headers=auth(faraday_token)).json()["data"]["notice_unread"] == 5
 
 
 def test_freeze_time_affects_clock_in_time():

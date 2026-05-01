@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from backend.core import time_provider
 from backend.core.response import ok
 from backend.db.database import get_db
-from backend.db.models import Menu, Notice, User
+from backend.db.models import Menu, Notice, NoticeRead, User
 from backend.dependencies import get_current_user
 
 router = APIRouter(prefix="/api/home", tags=["home"])
@@ -35,6 +35,9 @@ def notices(
         .offset((page - 1) * size)
         .limit(size)
     ).all()
+    read_ids = set(
+        db.scalars(select(NoticeRead.notice_id).where(NoticeRead.user_id == user.id)).all()
+    )
     return ok(
         {
             "total": total,
@@ -46,12 +49,21 @@ def notices(
                     "title": row.title,
                     "summary": row.summary,
                     "created_at": time_provider.fmt(row.created_at),
-                    "is_read": False,
+                    "is_read": row.id in read_ids,
                 }
                 for row in rows
             ],
         }
     )
+
+
+@router.get("/unread-count")
+def unread_count(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    total = db.scalar(select(func.count(Notice.id))) or 0
+    read_count = db.scalar(
+        select(func.count(NoticeRead.id)).where(NoticeRead.user_id == user.id)
+    ) or 0
+    return ok({"notice_unread": max(total - read_count, 0)})
 
 
 def _menu_item(row: Menu) -> dict:

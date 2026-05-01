@@ -63,6 +63,14 @@ public class UserSession {
                 .commit();
     }
 
+    /** Mine 页拉到最新 profile 后，只覆盖用户资料，不改当前 Token。 */
+    public void updateUserInfo(UserInfo userInfo) {
+        mUserInfo = userInfo;
+        mPrefs.edit()
+                .putString(KEY_USER_INFO, mGson.toJson(userInfo))
+                .commit();
+    }
+
     /** 登出或 Token 过期时清除会话 */
     public void clearSession() {
         mToken = null;

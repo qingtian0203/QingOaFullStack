@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from backend.core import time_provider
 from backend.core.response import ok
 from backend.db.database import create_tables, get_db
-from backend.db.models import PunchRecord, User
+from backend.db.models import NoticeRead, PunchRecord, User
 from backend.db.seed import reset_database
 from backend.schemas.debug import FreezeTimeRequest, ResetTodayPunchRequest, ScenarioRequest
 from backend.services import debug_service, punch_service
@@ -65,6 +65,7 @@ def state(db: Session = Depends(get_db)):
         .where(PunchRecord.punch_date == time_provider.now().date().isoformat())
         .order_by(PunchRecord.punch_time.desc())
     ).all()
+    notice_reads = db.scalars(select(NoticeRead).order_by(NoticeRead.id.asc())).all()
     return ok(
         {
             "active_users": [
@@ -86,6 +87,14 @@ def state(db: Session = Depends(get_db)):
                 for row in today_records
             ],
             "active_scenarios": debug_service.list_scenarios(),
+            "notice_reads": [
+                {
+                    "notice_id": row.notice_id,
+                    "user_id": row.user_id,
+                    "read_at": time_provider.fmt(row.read_at),
+                }
+                for row in notice_reads
+            ],
             "frozen_time": time_provider.fmt(time_provider.frozen_time()),
             "server_time": time_provider.fmt(time_provider.now()),
         }

@@ -17,7 +17,7 @@ from backend.core.errors import ApiError, BAD_REQUEST, INTERNAL_ERROR
 from backend.core.response import fail, json_response, ok
 from backend.db.database import SessionLocal, create_tables
 from backend.db.seed import seed_if_empty
-from backend.routers import auth, debug, home, mine, notices, okr, punch
+from backend.routers import auth, debug, home, mine, notices, okr, punch, user
 from backend.services import auth_service, debug_service
 
 
@@ -131,6 +131,7 @@ app.include_router(home.router)
 app.include_router(mine.router)
 app.include_router(notices.router)
 app.include_router(okr.router)
+app.include_router(user.router)
 app.include_router(punch.router)
 app.include_router(debug.router)
 

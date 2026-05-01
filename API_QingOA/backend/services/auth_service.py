@@ -18,6 +18,7 @@ def public_user(user: User, token: str | None = None) -> dict:
         "name": user.name,
         "dept": user.dept,
         "role": user.role,
+        "avatar_url": user.avatar_url or "",
         "has_punch_permission": bool(user.has_punch_permission),
     }
     if token is not None:

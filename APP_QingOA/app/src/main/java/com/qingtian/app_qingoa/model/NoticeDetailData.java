@@ -18,8 +18,12 @@ public class NoticeDetailData {
     @SerializedName("created_at")
     private String createdAt;
 
+    @SerializedName("is_read")
+    private boolean read;
+
     public int getId() { return id; }
     public String getTitle() { return title; }
     public String getContent() { return content; }
     public String getCreatedAt() { return createdAt; }
+    public boolean isRead() { return read; }
 }

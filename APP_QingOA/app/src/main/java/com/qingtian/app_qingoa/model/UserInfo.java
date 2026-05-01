@@ -20,6 +20,18 @@ public class UserInfo {
     @SerializedName("role")
     String role;
 
+    @SerializedName("avatar_url")
+    String avatarUrl;
+
+    @SerializedName("phone")
+    String phone;
+
+    @SerializedName("email")
+    String email;
+
+    @SerializedName("office_location")
+    String officeLocation;
+
     @SerializedName("has_punch_permission")
     boolean hasPunchPermission;
 
@@ -31,5 +43,17 @@ public class UserInfo {
     public String getName() { return name; }
     public String getDept() { return dept; }
     public String getRole() { return role; }
+    public String getAvatarUrl() { return avatarUrl; }
+    public String getPhone() { return phone; }
+    public String getEmail() { return email; }
+    public String getOfficeLocation() { return officeLocation; }
     public boolean hasPunchPermission() { return hasPunchPermission; }
+
+    public String getInitial() {
+        String source = name != null && !name.isEmpty() ? name : username;
+        if (source == null || source.isEmpty()) {
+            return "OA";
+        }
+        return source.substring(0, 1);
+    }
 }
