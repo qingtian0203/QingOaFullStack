@@ -49,6 +49,9 @@ public class PunchRecordAdapter extends RecyclerView.Adapter<PunchRecordAdapter.
         holder.tvClockInTime.setText(record.getClockInTimeLabel());
         holder.tvClockOutTime.setText(record.getClockOutTimeLabel());
         holder.tvPointDistance.setText(record.getPointDistanceLabel());
+        holder.itemView.setContentDescription(
+                "qingoa_punch_record_item_" + record.getPunchDate()
+                        + "_" + record.getDayStatusKey());
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onDayClick(record);
@@ -125,6 +128,13 @@ public class PunchRecordAdapter extends RecyclerView.Adapter<PunchRecordAdapter.
             return "无记录";
         }
 
+        public String getDayStatusKey() {
+            if (clockIn != null && clockOut != null) return "completed";
+            if (clockIn != null) return "missing_clock_out";
+            if (clockOut != null) return "missing_clock_in";
+            return "empty";
+        }
+
         public String getClockInTimeLabel() {
             return clockIn != null ? timeOnly(clockIn.getPunchTime()) : "未打卡";
         }
@@ -138,6 +148,11 @@ public class PunchRecordAdapter extends RecyclerView.Adapter<PunchRecordAdapter.
             if (record == null) return "暂无打卡地点";
             String point = record.getPointName() != null ? record.getPointName() : "未知打卡点";
             return "打卡点：" + point + "  ·  最近距离 " + record.getDistance() + "m";
+        }
+
+        public int getPrimaryRecordId() {
+            PunchRecordListData.PunchRecord record = clockOut != null ? clockOut : clockIn;
+            return record != null ? record.getId() : -1;
         }
 
         private static String timeOnly(String value) {

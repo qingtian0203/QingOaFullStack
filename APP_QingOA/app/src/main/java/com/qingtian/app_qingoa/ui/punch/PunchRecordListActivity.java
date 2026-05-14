@@ -1,5 +1,6 @@
 package com.qingtian.app_qingoa.ui.punch;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
@@ -68,7 +69,14 @@ public class PunchRecordListActivity extends BaseActivity {
     private void setupList(PunchRecordListData data) {
         mBinding.rvRecords.setLayoutManager(new LinearLayoutManager(this));
         mBinding.rvRecords.setAdapter(new PunchRecordAdapter(groupByDay(data.getList()), record -> {
-            ToastUtils.show(this, "每日详情 v1.6 开放");
+            int recordId = record.getPrimaryRecordId();
+            if (recordId <= 0) {
+                ToastUtils.show(this, "暂无可查看的打卡明细");
+                return;
+            }
+            Intent intent = new Intent(this, PunchRecordDetailActivity.class);
+            intent.putExtra("record_id", recordId);
+            startActivity(intent);
         }));
     }
 

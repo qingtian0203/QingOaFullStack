@@ -46,6 +46,7 @@ public class OkrAdapter extends RecyclerView.Adapter<OkrAdapter.ViewHolder> {
         holder.tvKrCount.setText(item.getKrCount() + " 个 KR");
         holder.tvProgress.setText(item.getProgress() + "%");
         holder.progressOkr.setProgress(item.getProgress());
+        holder.itemView.setContentDescription("qingoa_okr_item_" + item.getId());
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) {
                 mListener.onOkrClick(item);

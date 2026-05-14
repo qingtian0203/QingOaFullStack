@@ -1,0 +1,68 @@
+id: qingoa.profile.app_cache_refresh_avatar
+title: 用户资料头像刷新 smoke
+version: v1.71
+business_line: profile_auth
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_profile
+    method: POST
+    url: /debug/profile/reset
+    body: {username: konglingjia}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+steps:
+  - id: profile_before
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/user/profile
+  - id: upload_avatar
+    actor: employee
+    action: upload_file
+    url: /api/files/upload
+    fields:
+      usage: avatar
+    file:
+      filename: cache-refresh-avatar.png
+      mime_type: image/png
+      content_base64: iVBORw0KGgpxaW5nb2EtdjEtNzEtYXBwLWNhY2hlLXJlZnJlc2g=
+  - id: bind_avatar
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/user/avatar
+    body:
+      file_id: $upload_avatar.response.data.file_id
+  - id: profile_after
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/user/profile
+expected:
+  - type: assert
+    source: $profile_before.response
+    path: data.username
+    operator: eq
+    value: konglingjia
+  - type: assert
+    source: $upload_avatar.response
+    path: data.usage
+    operator: eq
+    value: avatar
+  - type: assert
+    source: $bind_avatar.response
+    path: data.avatar_url
+    operator: eq
+    value: $upload_avatar.response.data.url
+  - type: assert
+    source: $profile_after.response
+    path: data.avatar_url
+    operator: eq
+    value: $upload_avatar.response.data.url
+artifacts: [requests_json, report_md]

@@ -53,9 +53,25 @@
             android:textSize="12sp" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tv_badge"
+        android:layout_width="wrap_content"
+        android:layout_height="20dp"
+        android:layout_marginStart="10dp"
+        android:background="@drawable/bg_badge_brand"
+        android:gravity="center"
+        android:minWidth="20dp"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:textColor="@color/white"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
     <ImageView
         android:id="@+id/iv_arrow"
         android:layout_width="22dp"
         android:layout_height="22dp"
+        android:layout_marginStart="10dp"
         android:src="@drawable/ic_chevron_right" />
 </LinearLayout>

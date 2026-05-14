@@ -1,5 +1,7 @@
 package com.qingtian.app_qingoa.net;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import com.qingtian.app_qingoa.BuildConfig;
@@ -21,6 +23,12 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class ApiClient {
 
     private static final String TAG = "ApiClient";
+    private static final String PREF_NAME = "qingoa_api_environment";
+    private static final String KEY_ENVIRONMENT = "environment";
+    public static final String ENV_LOCAL = "local";
+    public static final String ENV_REMOTE = "remote";
+    private static final String LOCAL_BASE_URL = "http://127.0.0.1:8010/";
+    private static final String REMOTE_BASE_URL = "https://oa.qingagent.top/";
 
     /**
      * 调试地址切换：
@@ -28,12 +36,17 @@ public class ApiClient {
      *   真机局域网  → http://192.168.x.x:8010/
      *   外网远程    → https://oa.qingagent.top/
      */
-    // public static final String BASE_URL = "http://10.0.2.2:8010/";   // 模拟器本地调试
-    public static final String BASE_URL = "https://oa.qingagent.top/"; // 外网远程访问
-
+    private static SharedPreferences sPrefs;
     private static volatile ApiService sInstance;
 
     private ApiClient() {}
+
+    public static synchronized void init(Context context) {
+        if (sPrefs == null) {
+            sPrefs = context.getApplicationContext()
+                    .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        }
+    }
 
     public static ApiService getService() {
         if (sInstance == null) {
@@ -44,6 +57,49 @@ public class ApiClient {
             }
         }
         return sInstance;
+    }
+
+    public static String getEnvironment() {
+        if (!BuildConfig.DEBUG) {
+            return ENV_REMOTE;
+        }
+        if (sPrefs == null) {
+            return ENV_LOCAL;
+        }
+        return sPrefs.getString(KEY_ENVIRONMENT, ENV_LOCAL);
+    }
+
+    public static String getBaseUrl() {
+        return ENV_REMOTE.equals(getEnvironment()) ? REMOTE_BASE_URL : LOCAL_BASE_URL;
+    }
+
+    public static synchronized boolean setEnvironment(String environment) {
+        String normalized = ENV_REMOTE.equals(environment) ? ENV_REMOTE : ENV_LOCAL;
+        if (!BuildConfig.DEBUG) {
+            normalized = ENV_REMOTE;
+        }
+        String old = getEnvironment();
+        if (sPrefs != null) {
+            sPrefs.edit().putString(KEY_ENVIRONMENT, normalized).apply();
+        }
+        reset();
+        return !old.equals(normalized);
+    }
+
+    public static String resolveResourceUrl(String path) {
+        if (path == null || path.trim().isEmpty()) {
+            return "";
+        }
+        String value = path.trim();
+        if (value.startsWith("http://") || value.startsWith("https://")) {
+            return value;
+        }
+        String base = getBaseUrl();
+        base = base.endsWith("/") ? base : base + "/";
+        if (value.startsWith("/")) {
+            return base + value.substring(1);
+        }
+        return base + value;
     }
 
     private static ApiService buildService() {
@@ -74,7 +130,7 @@ public class ApiClient {
                 .build();
 
         return new Retrofit.Builder()
-                .baseUrl(BASE_URL)
+                .baseUrl(getBaseUrl())
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build()

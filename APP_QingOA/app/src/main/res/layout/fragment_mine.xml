@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/oa_bg"
+    android:contentDescription="qingoa_mine_page"
     android:fillViewport="true">
 
     <LinearLayout
@@ -29,6 +30,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="18dp"
             android:background="@drawable/bg_hero"
+            android:contentDescription="qingoa_mine_profile_card"
             android:elevation="3dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
@@ -40,6 +42,7 @@
                 android:layout_height="62dp"
                 android:background="@drawable/bg_avatar"
                 android:clickable="true"
+                android:contentDescription="qingoa_mine_avatar"
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackgroundBorderless">
 
@@ -47,7 +50,7 @@
                     android:id="@+id/iv_avatar"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    android:contentDescription="头像"
+                    android:contentDescription="qingoa_mine_avatar_image"
                     android:scaleType="centerCrop"
                     android:visibility="gone" />
 
@@ -204,6 +207,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:clipToPadding="false"
+                android:contentDescription="qingoa_mine_menu_dynamic_area"
                 android:nestedScrollingEnabled="false"
                 android:visibility="gone" />
 

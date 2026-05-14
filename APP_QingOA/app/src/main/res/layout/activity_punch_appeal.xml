@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/oa_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingTop="64dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="28dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/btn_back"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="@drawable/bg_back_button"
+                android:contentDescription="返回"
+                android:padding="8dp"
+                android:src="@drawable/ic_arrow_back" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/oa_text_primary"
+                    android:textSize="24sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_subtitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/oa_text_secondary"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/form_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:background="@drawable/bg_card"
+            android:orientation="vertical"
+            android:padding="18dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="提交补卡"
+                android:textColor="@color/oa_text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/et_punch_date"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="14dp"
+                android:background="@drawable/bg_input"
+                android:contentDescription="qingoa_punch_appeal_date_input"
+                android:hint="补卡日期 yyyy-MM-dd"
+                android:inputType="date"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:textColor="@color/oa_text_primary"
+                android:textColorHint="@color/oa_text_muted"
+                android:textSize="14sp" />
+
+            <RadioGroup
+                android:id="@+id/radio_group_type"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radio_clock_in"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:checked="true"
+                    android:contentDescription="qingoa_punch_appeal_clock_in_radio"
+                    android:text="上班卡"
+                    android:textColor="@color/oa_text_primary"
+                    android:textSize="14sp" />
+
+                <RadioButton
+                    android:id="@+id/radio_clock_out"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:contentDescription="qingoa_punch_appeal_clock_out_radio"
+                    android:text="下班卡"
+                    android:textColor="@color/oa_text_primary"
+                    android:textSize="14sp" />
+            </RadioGroup>
+
+            <EditText
+                android:id="@+id/et_expect_time"
+                android:layout_width="match_parent"
+                android:layout_height="46dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_input"
+                android:contentDescription="qingoa_punch_appeal_expect_time_input"
+                android:hint="期望补卡时间 HH:mm:ss"
+                android:inputType="time"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp"
+                android:textColor="@color/oa_text_primary"
+                android:textColorHint="@color/oa_text_muted"
+                android:textSize="14sp" />
+
+            <EditText
+                android:id="@+id/et_reason"
+                android:layout_width="match_parent"
+                android:layout_height="92dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_input"
+                android:contentDescription="qingoa_punch_appeal_reason_input"
+                android:gravity="top"
+                android:hint="补卡原因"
+                android:inputType="textMultiLine"
+                android:padding="14dp"
+                android:textColor="@color/oa_text_primary"
+                android:textColorHint="@color/oa_text_muted"
+                android:textSize="14sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_submit_appeal"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"
+                android:contentDescription="qingoa_punch_appeal_submit_button"
+                android:text="提交申诉"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/oa_primary"
+                app:cornerRadius="14dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_list_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:textColor="@color/oa_text_primary"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_appeals"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:contentDescription="qingoa_punch_appeal_list"
+                android:nestedScrollingEnabled="false" />
+
+            <TextView
+                android:id="@+id/tv_empty"
+                android:layout_width="match_parent"
+                android:layout_height="120dp"
+                android:background="@drawable/bg_loading_panel"
+                android:gravity="center"
+                android:text="暂无数据"
+                android:textColor="@color/oa_text_muted"
+                android:textSize="14sp"
+                android:visibility="gone" />
+
+            <ProgressBar
+                android:id="@+id/progress_bar"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="42dp"
+                android:indeterminateTint="@color/oa_primary"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+</ScrollView>

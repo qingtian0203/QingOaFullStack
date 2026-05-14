@@ -49,6 +49,7 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
         float alpha = item.isEnabled() ? 1.0f : 0.4f;
         holder.ivIcon.setAlpha(alpha);
         holder.tvName.setAlpha(alpha);
+        holder.itemView.setContentDescription(menuContentDescription(item));
 
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) {
@@ -60,6 +61,18 @@ public class MenuAdapter extends RecyclerView.Adapter<MenuAdapter.ViewHolder> {
     @Override
     public int getItemCount() {
         return mItems != null ? mItems.size() : 0;
+    }
+
+    private String menuContentDescription(MenuData.MenuItem item) {
+        String target = item.getTarget();
+        if ("PunchCardActivity".equals(target)) {
+            return "qingoa_home_punch_entry";
+        }
+        if ("WorkflowWebActivity".equals(target)) {
+            return "qingoa_home_workflow_entry";
+        }
+        String name = item.getName() != null ? item.getName() : "menu";
+        return "qingoa_home_menu_" + name + (item.isEnabled() ? "_enabled" : "_disabled");
     }
 
     static class ViewHolder extends RecyclerView.ViewHolder {

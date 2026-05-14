@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/oa_bg"
+    android:contentDescription="qingoa_chat_create_page"
+    android:orientation="vertical"
+    android:paddingStart="18dp"
+    android:paddingTop="48dp"
+    android:paddingEnd="18dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_back_button"
+            android:contentDescription="qingoa_chat_create_back"
+            android:gravity="center"
+            android:text="‹"
+            android:textColor="@color/oa_text_primary"
+            android:textSize="28sp" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:text="创建聊天"
+            android:textColor="@color/oa_text_primary"
+            android:textSize="25sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <EditText
+        android:id="@+id/et_keyword"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="18dp"
+        android:background="@drawable/bg_input"
+        android:contentDescription="qingoa_chat_search_input"
+        android:hint="搜索姓名或账号"
+        android:imeOptions="actionSearch"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textColor="@color/oa_text_primary"
+        android:textColorHint="@color/oa_text_muted"
+        android:textSize="15sp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_users"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="14dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:contentDescription="qingoa_chat_user_list"
+        android:paddingBottom="24dp" />
+
+    <TextView
+        android:id="@+id/tv_empty"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:gravity="center"
+        android:text="没有找到用户"
+        android:textColor="@color/oa_text_muted"
+        android:textSize="14sp"
+        android:visibility="gone" />
+</LinearLayout>

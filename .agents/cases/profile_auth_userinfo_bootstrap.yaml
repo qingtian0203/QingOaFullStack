@@ -1,0 +1,50 @@
+id: qingoa.profile_auth.userinfo_bootstrap
+title: 启动 token 校验与用户信息引导
+version: v1.7
+business_line: profile_auth
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_profile
+    method: POST
+    url: /debug/profile/reset
+    body: {username: konglingjia}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: user_info
+    actor: employee
+    method: GET
+    url: /api/auth/user-info
+steps:
+  - id: launch_app
+    actor: employee
+    action: app_launch
+    package: com.qingtian.app_qingoa
+  - id: wait_home_page
+    actor: employee
+    action: app_wait
+    target: qingoa_home_page
+expected:
+  - type: assert
+    source: $user_info.response
+    path: code
+    operator: eq
+    value: 0
+  - type: assert
+    source: $user_info.response
+    path: data.username
+    operator: eq
+    value: konglingjia
+  - type: ui_assert
+    selector: qingoa_login_username_input
+    operator: not_exists
+  - type: ui_assert
+    selector: qingoa_home_page
+    operator: exists
+artifacts: [screenshot, requests_json, report_md]

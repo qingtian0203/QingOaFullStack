@@ -1,0 +1,102 @@
+id: qingoa.wap.leave_workflow_e2e
+title: WAP 请假流程端到端联动
+version: v1.7
+business_line: workflow_wap
+priority: P0
+layers: [wap, api, debug]
+target:
+  app: WAP_QingOA
+  entry: /wap/#/workflow
+actors:
+  applicant: konglingjia
+  manager: manager
+  hr: hr
+wap:
+  case_timeout: 360
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+steps:
+  - id: open_new_list
+    actor: applicant
+    action: wap_click
+    selector: "[data-testid='workflow-tab-new']"
+  - id: open_new_tab
+    actor: applicant
+    action: wap_click
+    selector: "[data-testid='workflow-new-leave_request']"
+  - id: submit_leave
+    actor: applicant
+    action: wap_fill_and_submit_leave
+    params:
+      leave_type: sick
+      start_date: "{{today}}"
+      end_date: "{{today+3}}"
+      reason: WAP 自动化测试请假四天
+    selectors:
+      leave_type: "[data-testid='leave-type-select']"
+      start_date: "[data-testid='leave-start-date']"
+      end_date: "[data-testid='leave-end-date']"
+      reason: "[data-testid='leave-reason-input']"
+      submit: "[data-testid='leave-submit-button']"
+    save:
+      process_instance_id: $url.params.id
+  - id: manager_approve
+    actor: manager
+    action: wap_approve_task_for_instance
+    params:
+      instance_id: $submit_leave.process_instance_id
+      note: 直属上级同意
+    selectors:
+      task: "[data-testid^='workflow-task-']"
+      note: "[data-testid='workflow-review-note']"
+      approve: "[data-testid='workflow-action-approve']"
+  - id: hr_approve
+    actor: hr
+    action: wap_approve_task_for_instance
+    params:
+      instance_id: $submit_leave.process_instance_id
+      note: HR 同意
+    selectors:
+      task: "[data-testid^='workflow-task-']"
+      note: "[data-testid='workflow-review-note']"
+      approve: "[data-testid='workflow-action-approve']"
+expected:
+  - type: assert
+    source: $manager_approve.response
+    path: data.status
+    operator: eq
+    value: manager_approved
+  - type: assert
+    source: $hr_approve.response
+    path: data.status
+    operator: eq
+    value: approved
+  - type: http_call
+    id: latest_leave
+    method: GET
+    url: /debug/leave/latest?username=konglingjia
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.status
+    operator: eq
+    value: approved
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.days
+    operator: eq
+    value: 4
+  - type: ui_assert
+    selector: "[data-testid='workflow-timeline-manager_review']"
+    operator: contains
+    value: 已通过
+  - type: ui_assert
+    selector: "[data-testid='workflow-timeline-hr_review']"
+    operator: contains
+    value: 已通过
+notes:
+  - WAP 只通过 data-testid 定位，视觉识别仅用于截图报告和兜底。
+  - 退回状态统一为 returned，退回节点由 timeline node_key 区分。
+artifacts: [screenshot, debug_json, report_md]

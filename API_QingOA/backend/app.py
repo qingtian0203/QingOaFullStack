@@ -10,19 +10,25 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from backend.core.config import APP_NAME
+from backend.core.config import APP_NAME, STATIC_DIR, UPLOAD_DIR, WAP_DIST_DIR
 from backend.core.errors import ApiError, BAD_REQUEST, INTERNAL_ERROR
 from backend.core.response import fail, json_response, ok
 from backend.db.database import SessionLocal, create_tables
 from backend.db.seed import seed_if_empty
-from backend.routers import auth, debug, home, mine, notices, okr, punch, user
+from backend.routers import auth, badges, debug, files, home, im, leave, mine, notices, okr, punch, user, workflow
 from backend.services import auth_service, debug_service
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    (STATIC_DIR / "avatars").mkdir(parents=True, exist_ok=True)
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    (UPLOAD_DIR / "avatar").mkdir(parents=True, exist_ok=True)
+    (UPLOAD_DIR / "leave_attachment").mkdir(parents=True, exist_ok=True)
     create_tables()
     with SessionLocal() as db:
         seed_if_empty(db)
@@ -39,6 +45,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
+if WAP_DIST_DIR.exists():
+    app.mount("/wap", StaticFiles(directory=str(WAP_DIST_DIR), html=True), name="wap")
+
 
 @app.middleware("http")
 async def debug_observability_middleware(request: Request, call_next):
@@ -54,15 +64,15 @@ async def debug_observability_middleware(request: Request, call_next):
 
     request._receive = receive
 
-    is_debug_path = request.url.path.startswith("/debug")
-    scenario = None if is_debug_path else debug_service.match_scenario(request.method, request.url.path, user_id)
+    is_observability_excluded = request.url.path.startswith(("/debug", "/static", "/wap"))
+    scenario = None if is_observability_excluded else debug_service.match_scenario(request.method, request.url.path, user_id)
     if scenario is not None:
         scenario_injected = True
         if scenario.delay_ms:
             await asyncio.sleep(scenario.delay_ms / 1000)
         response_body = scenario.response
         duration_ms = int((time.perf_counter() - start) * 1000)
-        if not is_debug_path:
+        if not is_observability_excluded:
             debug_service.add_request_log(
                 method=request.method,
                 path=request.url.path,
@@ -80,9 +90,9 @@ async def debug_observability_middleware(request: Request, call_next):
     response_body_bytes = b""
     async for chunk in response.body_iterator:
         response_body_bytes += chunk
-    response_body = _decode_json(response_body_bytes)
+    response_body = None if is_observability_excluded else _decode_json(response_body_bytes)
     duration_ms = int((time.perf_counter() - start) * 1000)
-    if not is_debug_path:
+    if not is_observability_excluded:
         debug_service.add_request_log(
             method=request.method,
             path=request.url.path,
@@ -127,12 +137,17 @@ def root():
 
 
 app.include_router(auth.router)
+app.include_router(badges.router)
 app.include_router(home.router)
 app.include_router(mine.router)
 app.include_router(notices.router)
 app.include_router(okr.router)
+app.include_router(files.router)
 app.include_router(user.router)
+app.include_router(im.router)
 app.include_router(punch.router)
+app.include_router(leave.router)
+app.include_router(workflow.router)
 app.include_router(debug.router)
 
 

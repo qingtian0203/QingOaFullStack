@@ -10,4 +10,5 @@ class UserProfileUpdateRequest(BaseModel):
 
 
 class UserAvatarUpdateRequest(BaseModel):
-    avatar_url: str
+    avatar_url: str | None = None
+    file_id: str | None = None

@@ -1,0 +1,64 @@
+id: qingoa.profile_auth.avatar_file_upload_invalid_type
+title: 头像上传拒绝非图片文件
+version: v1.71
+business_line: profile_auth
+priority: P0
+layers: [api]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_profile
+    method: POST
+    url: /debug/profile/reset
+    body: {username: konglingjia}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+steps:
+  - id: set_existing_avatar
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/user/avatar
+    body:
+      avatar_url: https://example.com/avatar.png
+  - id: upload_invalid_avatar
+    actor: employee
+    action: upload_file
+    url: /api/files/upload
+    expect_code: 2011
+    fields:
+      usage: avatar
+    file:
+      filename: avatar.txt
+      mime_type: text/plain
+      content_text: not-an-image
+  - id: profile
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/user/profile
+expected:
+  - type: assert
+    source: $set_existing_avatar.response
+    path: data.avatar_url
+    operator: eq
+    value: https://example.com/avatar.png
+  - type: assert
+    source: $upload_invalid_avatar.response
+    path: code
+    operator: eq
+    value: 2011
+  - type: assert
+    source: $upload_invalid_avatar.response
+    path: msg
+    operator: contains
+    value: 头像文件必须
+  - type: assert
+    source: $profile.response
+    path: data.avatar_url
+    operator: eq
+    value: https://example.com/avatar.png
+artifacts: [requests_json, report_md]

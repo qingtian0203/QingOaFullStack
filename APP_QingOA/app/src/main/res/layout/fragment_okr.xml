@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/oa_bg">
+    android:background="@color/oa_bg"
+    android:contentDescription="qingoa_okr_page">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -84,6 +85,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:clipToPadding="false"
+                android:contentDescription="qingoa_okr_list"
                 android:paddingBottom="98dp" />
 
             <LinearLayout
@@ -144,6 +146,7 @@
         android:layout_gravity="bottom|end"
         android:layout_marginEnd="22dp"
         android:layout_marginBottom="22dp"
+        android:contentDescription="qingoa_okr_create_button"
         android:text="新建 OKR"
         android:textColor="@color/white"
         android:textStyle="bold"

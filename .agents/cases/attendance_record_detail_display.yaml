@@ -1,0 +1,95 @@
+id: qingoa.attendance.record_detail_display
+title: 打卡记录详情页字段展示
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [app, api, debug]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: freeze_morning
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-05-06 09:01:00"}
+  - type: http_call
+    id: reset_punch_date
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-05-06"}
+  - type: http_call
+    id: seed_clock_in
+    actor: employee
+    method: POST
+    url: /api/punch/clock
+    body:
+      lat: 39.811774
+      lng: 116.295234
+      device_id: android_device_001
+      punch_type: clock_in
+  - type: http_call
+    id: freeze_evening
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-05-06 18:02:00"}
+  - type: http_call
+    id: seed_clock_out
+    actor: employee
+    method: POST
+    url: /api/punch/clock
+    body:
+      lat: 39.811774
+      lng: 116.295234
+      device_id: android_device_001
+      punch_type: clock_out
+    save:
+      record_id: $seed_clock_out.response.data.punch_id
+steps:
+  - id: open_punch_page
+    actor: employee
+    action: app_click
+    target: qingoa_home_punch_entry
+    wait_for: qingoa_punch_record_entry
+  - id: open_record_list
+    actor: employee
+    action: app_click
+    target: qingoa_punch_record_entry
+    wait_for: qingoa_punch_record_list
+  - id: open_record_detail
+    actor: employee
+    action: app_click
+    target: qingoa_punch_record_item_2026-05-06_completed
+    wait_for: qingoa_punch_record_detail_content
+    wait_timeout: 8
+  - id: detail_api
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/punch/records/$seed_clock_out.record_id
+expected:
+  - type: assert
+    source: $detail_api.response
+    path: data.punch_type
+    operator: eq
+    value: clock_out
+  - type: assert
+    source: $detail_api.response
+    path: data.point_name
+    operator: eq
+    value: 晴天打卡点
+  - type: ui_assert
+    selector: qingoa_punch_record_detail_content
+    operator: exists
+  - type: ui_assert
+    selector: qingoa_punch_record_detail_type
+    operator: contains
+    value: 下班打卡
+  - type: ui_assert
+    selector: qingoa_punch_record_detail_date
+    operator: contains
+    value: "2026-05-06"
+  - type: ui_assert
+    selector: qingoa_punch_record_detail_point
+    operator: contains
+    value: 晴天打卡点
+artifacts: [screenshot, requests_json, debug_json, report_md]

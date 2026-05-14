@@ -1,0 +1,50 @@
+id: qingoa.leave.reject
+title: 请假直属上级驳回后流程结束
+version: v1.7
+business_line: leave_workflow_api
+priority: P0
+layers: [api, debug]
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+steps:
+  - id: submit_leave
+    actor: applicant
+    action: http_call
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: personal
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: 事假两天
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+  - id: reject_manager
+    actor: manager
+    action: reject_task_for_instance
+    params:
+      instance_id: $submit_leave.process_instance_id
+      note: 近期排班紧张，暂不批准
+  - id: completed_instances
+    actor: applicant
+    action: http_call
+    method: GET
+    url: /api/workflow/instances?bucket=completed
+expected:
+  - type: assert
+    source: $reject_manager.response
+    path: data.status
+    operator: eq
+    value: rejected
+  - type: assert
+    source: $completed_instances.response
+    path: data.instances.0.status
+    operator: eq
+    value: rejected
+artifacts: [requests_json, debug_json, report_md]

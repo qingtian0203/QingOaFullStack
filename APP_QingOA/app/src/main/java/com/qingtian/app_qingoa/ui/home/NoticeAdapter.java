@@ -43,6 +43,7 @@ public class NoticeAdapter extends RecyclerView.Adapter<NoticeAdapter.ViewHolder
         holder.tvSummary.setText(item.getSummary() != null ? item.getSummary() : "");
         holder.tvTime.setText(item.getCreatedAt() != null ? item.getCreatedAt() : "");
         holder.tvUnread.setVisibility(item.isRead() ? View.GONE : View.VISIBLE);
+        holder.itemView.setContentDescription("qingoa_notice_item_" + item.getId());
         holder.itemView.setOnClickListener(v -> {
             if (mListener != null) mListener.onItemClick(item);
         });

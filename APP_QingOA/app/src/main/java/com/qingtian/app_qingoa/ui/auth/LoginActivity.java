@@ -35,7 +35,34 @@ public class LoginActivity extends BaseActivity {
         setContentView(mBinding.getRoot());
 
         enableKeyboardAwareScroll(mBinding.scrollContent);
+        setupEnvironmentSwitcher();
         setupListeners();
+    }
+
+    private void setupEnvironmentSwitcher() {
+        updateEnvironmentUi();
+        mBinding.rgApiEnvironment.setOnCheckedChangeListener((group, checkedId) -> {
+            String environment = checkedId == mBinding.rbEnvRemote.getId()
+                    ? ApiClient.ENV_REMOTE
+                    : ApiClient.ENV_LOCAL;
+            boolean changed = ApiClient.setEnvironment(environment);
+            if (changed) {
+                UserSession.getInstance().clearSession();
+                ToastUtils.show(this, "已切换接口环境，请重新登录");
+            }
+            updateEnvironmentUi();
+        });
+    }
+
+    private void updateEnvironmentUi() {
+        String environment = ApiClient.getEnvironment();
+        if (ApiClient.ENV_REMOTE.equals(environment)) {
+            mBinding.rbEnvRemote.setChecked(true);
+        } else {
+            mBinding.rbEnvLocal.setChecked(true);
+        }
+        String label = ApiClient.ENV_REMOTE.equals(environment) ? "公网" : "本地";
+        mBinding.tvApiEnvironmentUrl.setText(label + "：" + ApiClient.getBaseUrl());
     }
 
     private void setupListeners() {
@@ -103,6 +130,9 @@ public class LoginActivity extends BaseActivity {
 
     private void setLoading(boolean loading) {
         mBinding.btnLogin.setEnabled(!loading);
+        mBinding.rgApiEnvironment.setEnabled(!loading);
+        mBinding.rbEnvLocal.setEnabled(!loading);
+        mBinding.rbEnvRemote.setEnabled(!loading);
         mBinding.progressBar.setVisibility(loading ? View.VISIBLE : View.GONE);
     }
 

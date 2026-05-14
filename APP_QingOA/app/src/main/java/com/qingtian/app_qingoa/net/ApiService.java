@@ -1,6 +1,12 @@
 package com.qingtian.app_qingoa.net;
 
 import com.qingtian.app_qingoa.model.LoginData;
+import com.qingtian.app_qingoa.model.BadgeSummaryData;
+import com.qingtian.app_qingoa.model.FileUploadData;
+import com.qingtian.app_qingoa.model.ImConversationListData;
+import com.qingtian.app_qingoa.model.ImMessageListData;
+import com.qingtian.app_qingoa.model.ImUser;
+import com.qingtian.app_qingoa.model.ImUserListData;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.NoticeDetailData;
 import com.qingtian.app_qingoa.model.NoticeListData;
@@ -10,15 +16,21 @@ import com.qingtian.app_qingoa.model.OkrListData;
 import com.qingtian.app_qingoa.model.OkrProgressResultData;
 import com.qingtian.app_qingoa.model.PunchRecordDetailData;
 import com.qingtian.app_qingoa.model.PunchRecordListData;
+import com.qingtian.app_qingoa.model.PunchAppealListData;
+import com.qingtian.app_qingoa.model.PunchAppealResultData;
 import com.qingtian.app_qingoa.model.PunchResultData;
 import com.qingtian.app_qingoa.model.PunchStatusData;
 import com.qingtian.app_qingoa.model.UnreadCountData;
 import com.qingtian.app_qingoa.model.UserInfo;
 
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.PUT;
 import retrofit2.http.Query;
@@ -36,6 +48,11 @@ public interface ApiService {
 
     @POST("api/auth/logout")
     Call<ApiResponse<Void>> logout();
+
+    // ────────── 跨模块红点摘要（v1.8 P0.5） ──────────
+
+    @GET("api/badges/summary")
+    Call<ApiResponse<BadgeSummaryData>> getBadgeSummary();
 
     /**
      * 双重职责：
@@ -86,6 +103,50 @@ public interface ApiService {
     @POST("api/user/avatar")
     Call<ApiResponse<UserInfo>> updateAvatar(@Body AvatarUpdateRequest body);
 
+    // ────────── IM 聊天模块（v1.8 新增） ──────────
+
+    @GET("api/im/users/search")
+    Call<ApiResponse<ImUserListData>> searchImUsers(
+            @Query("q") String keyword,
+            @Query("limit") int limit
+    );
+
+    @POST("api/im/friends")
+    Call<ApiResponse<ImUser>> addImFriend(@Body AddFriendRequest body);
+
+    @GET("api/im/conversations")
+    Call<ApiResponse<ImConversationListData>> getImConversations();
+
+    @POST("api/im/conversations/single")
+    Call<ApiResponse<ImConversationListData.Conversation>> getOrCreateSingleConversation(
+            @Body SingleConversationRequest body
+    );
+
+    @GET("api/im/conversations/{id}/messages")
+    Call<ApiResponse<ImMessageListData>> getImMessages(
+            @Path("id") int conversationId,
+            @Query("limit") int limit
+    );
+
+    @POST("api/im/conversations/{id}/messages")
+    Call<ApiResponse<ImMessageListData.Message>> sendImMessage(
+            @Path("id") int conversationId,
+            @Body SendImMessageRequest body
+    );
+
+    @POST("api/im/conversations/{id}/read")
+    Call<ApiResponse<Void>> markImRead(
+            @Path("id") int conversationId,
+            @Body MarkReadRequest body
+    );
+
+    @Multipart
+    @POST("api/files/upload")
+    Call<ApiResponse<FileUploadData>> uploadFile(
+            @Part MultipartBody.Part file,
+            @Part("usage") RequestBody usage
+    );
+
     // ────────── 打卡模块 ──────────
 
     @GET("api/punch/today-status")
@@ -112,6 +173,25 @@ public interface ApiService {
     /** v1.5A 新增：打卡详情 */
     @GET("api/punch/records/{id}")
     Call<ApiResponse<PunchRecordDetailData>> getPunchRecordDetail(@Path("id") int id);
+
+    /** v1.6B 新增：提交补卡申诉 */
+    @POST("api/punch/appeal")
+    Call<ApiResponse<PunchAppealResultData>> createPunchAppeal(@Body PunchAppealRequest body);
+
+    /** v1.6B 新增：我的补卡申诉 */
+    @GET("api/punch/appeals")
+    Call<ApiResponse<PunchAppealListData>> getPunchAppeals();
+
+    /** v1.6B 新增：待我审批的补卡申诉 */
+    @GET("api/punch/appeals/pending-review")
+    Call<ApiResponse<PunchAppealListData>> getPendingPunchAppeals();
+
+    /** v1.6B 新增：补卡申诉审批 */
+    @POST("api/punch/appeals/{id}/review")
+    Call<ApiResponse<PunchAppealListData.PunchAppeal>> reviewPunchAppeal(
+            @Path("id") int id,
+            @Body PunchAppealReviewRequest body
+    );
 
     // ────────── OKR 模块（v1.5B 新增） ──────────
 

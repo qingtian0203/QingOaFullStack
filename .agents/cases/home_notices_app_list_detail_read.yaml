@@ -1,0 +1,71 @@
+id: qingoa.home_notices.app_list_detail_read
+title: 首页公告 App 入口数据 smoke
+version: v1.71
+business_line: home_notices
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_notice_read
+    method: POST
+    url: /debug/notices/reset-read
+    body: {username: konglingjia, notice_id: 1}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+steps:
+  - id: home_menu
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/home/menu
+  - id: notices
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/home/notices?page=1&size=10
+  - id: notice_detail
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/notices/1
+  - id: mark_read
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/notices/1/read
+  - id: unread_after
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/home/unread-count
+expected:
+  - type: assert
+    source: $home_menu.response
+    path: data.menus
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $notices.response
+    path: data.list
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $notice_detail.response
+    path: data.id
+    operator: eq
+    value: 1
+  - type: assert
+    source: $mark_read.response
+    path: code
+    operator: eq
+    value: 0
+  - type: assert
+    source: $unread_after.response
+    path: data.notice_unread
+    operator: gte
+    value: 0
+artifacts: [requests_json, report_md]

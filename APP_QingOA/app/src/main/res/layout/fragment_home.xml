@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/oa_bg"
+    android:contentDescription="qingoa_home_page"
     android:fillViewport="true">
 
     <LinearLayout
@@ -100,6 +101,7 @@
                     android:id="@+id/rv_menu"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:contentDescription="qingoa_home_menu_area"
                     android:nestedScrollingEnabled="false" />
 
                 <LinearLayout
@@ -158,6 +160,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@drawable/bg_soft_blue"
+                    android:contentDescription="qingoa_home_unread_count"
                     android:paddingStart="10dp"
                     android:paddingTop="4dp"
                     android:paddingEnd="10dp"
@@ -176,6 +179,7 @@
                     android:id="@+id/rv_notices"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:contentDescription="qingoa_home_notice_list"
                     android:nestedScrollingEnabled="false" />
 
                 <LinearLayout

@@ -21,6 +21,7 @@ import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchRecordListActivity;
+import com.qingtian.app_qingoa.ui.workflow.WorkflowWebActivity;
 import com.qingtian.app_qingoa.util.AppRouteWhitelist;
 import com.qingtian.app_qingoa.util.ToastUtils;
 
@@ -114,6 +115,9 @@ public class HomeFragment extends Fragment {
                 break;
             case "PunchRecordListActivity":
                 startActivity(new Intent(requireContext(), PunchRecordListActivity.class));
+                break;
+            case "WorkflowWebActivity":
+                startActivity(new Intent(requireContext(), WorkflowWebActivity.class));
                 break;
             default:
                 ToastUtils.show(requireContext(), "功能开发中");

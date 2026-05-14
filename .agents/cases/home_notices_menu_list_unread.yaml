@@ -1,0 +1,68 @@
+id: qingoa.home_notices.menu_list_unread
+title: 首页菜单、公告列表与未读数
+version: v1.7
+business_line: home_notices
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_notice_reads
+    method: POST
+    url: /debug/notices/reset-read
+    body: {username: konglingjia}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: home_menu
+    actor: employee
+    method: GET
+    url: /api/home/menu
+  - type: http_call
+    id: notices
+    actor: employee
+    method: GET
+    url: /api/home/notices?page=1&size=10
+  - type: http_call
+    id: unread
+    actor: employee
+    method: GET
+    url: /api/home/unread-count
+steps:
+  - id: wait_home_menu
+    actor: employee
+    action: app_wait
+    target: qingoa_home_menu_area
+  - id: wait_home_notices
+    actor: employee
+    action: app_wait
+    target: qingoa_home_notice_list
+expected:
+  - type: assert
+    source: $home_menu.response
+    path: data.menus
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $notices.response
+    path: data.list
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $unread.response
+    path: data.notice_unread
+    operator: gte
+    value: 0
+  - type: ui_assert
+    selector: qingoa_home_menu_area
+    operator: exists
+  - type: ui_assert
+    selector: qingoa_home_notice_list
+    operator: exists
+  - type: ui_assert
+    selector: qingoa_home_unread_count
+    operator: exists
+artifacts: [requests_json, report_md]

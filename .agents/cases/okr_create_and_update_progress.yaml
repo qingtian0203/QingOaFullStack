@@ -1,0 +1,77 @@
+id: qingoa.okr.create_and_update_progress
+title: OKR 创建和 KR 进度更新
+version: v1.7
+business_line: okr
+priority: P2
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_okrs
+    method: POST
+    url: /debug/okr/reset
+    body: {usernames: [konglingjia]}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: create_okr
+    actor: employee
+    method: POST
+    url: /api/okr/create
+    body:
+      title: Q2 接口自动化
+      description: 为透明 OA 补齐可追踪的接口用例
+      period: 2026-Q2
+      key_results:
+        - {title: 覆盖 OKR 核心接口, target_value: 5, unit: 个}
+        - {title: 完成 App 联调, target_value: 100, unit: "%"}
+    save:
+      okr_id: $create_okr.response.data.id
+  - type: http_call
+    id: okr_detail
+    actor: employee
+    method: GET
+    url: /api/okr/$create_okr.okr_id
+  - type: http_call
+    id: update_kr
+    actor: employee
+    method: PUT
+    url: /api/okr/$create_okr.okr_id/key-results/$okr_detail.response.data.key_results.0.id
+    body:
+      current_value: 6
+steps:
+  - id: open_okr_tab
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_okr
+    wait_for: qingoa_okr_list
+    wait_timeout: 8
+  - id: open_created_okr
+    actor: employee
+    action: app_click
+    target: qingoa_okr_item_$create_okr.okr_id
+    wait_for: qingoa_okr_detail_content
+    wait_timeout: 8
+expected:
+  - type: assert
+    source: $create_okr.response
+    path: code
+    operator: eq
+    value: 0
+  - type: assert
+    source: $update_kr.response
+    path: data.kr_progress
+    operator: eq
+    value: 100
+  - type: assert
+    source: $update_kr.response
+    path: data.okr_progress
+    operator: gt
+    value: 0
+  - type: ui_assert
+    selector: qingoa_okr_detail_content
+    operator: exists
+artifacts: [requests_json, report_md]

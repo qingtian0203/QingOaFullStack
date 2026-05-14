@@ -1,0 +1,56 @@
+id: qingoa.home_notices.cross_user_unread
+title: 公告已读状态按用户隔离
+version: v1.7
+business_line: home_notices
+priority: P1
+layers: [api]
+actors:
+  employee: konglingjia
+  other: faraday
+preconditions:
+  - type: http_call
+    id: reset_employee_notice_read
+    method: POST
+    url: /debug/notices/reset-read
+    body: {username: konglingjia, notice_id: 1}
+  - type: http_call
+    id: reset_other_notice_read
+    method: POST
+    url: /debug/notices/reset-read
+    body: {username: faraday, notice_id: 1}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: login
+    actor: other
+    username: faraday
+    password: "123456"
+steps:
+  - id: employee_mark_read
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/notices/1/read
+  - id: employee_detail
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/notices/1
+  - id: other_detail
+    actor: other
+    action: http_call
+    method: GET
+    url: /api/notices/1
+expected:
+  - type: assert
+    source: $employee_detail.response
+    path: data.is_read
+    operator: eq
+    value: true
+  - type: assert
+    source: $other_detail.response
+    path: data.is_read
+    operator: eq
+    value: false
+artifacts: [requests_json, report_md]

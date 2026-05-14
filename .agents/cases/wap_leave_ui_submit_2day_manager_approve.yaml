@@ -1,0 +1,86 @@
+id: qingoa.leave.ui_submit_2day_manager_approve
+title: App WebView 请假 2 天直属审批通过
+version: v1.72
+business_line: workflow_wap
+priority: P0
+layers: [app, app_webview, wap, api, debug]
+target:
+  app: QingOA
+  entry: app_home_workflow_webview
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+steps:
+  - id: open_workflow_from_app
+    actor: applicant
+    action: app_open_wap_entry
+    entry: workflow
+  - id: assert_workflow_webview
+    actor: applicant
+    action: webview_assert_current_url
+    contains: /wap/
+  - id: open_new_list
+    actor: applicant
+    action: wap_click
+    selector: "[data-testid='workflow-tab-new']"
+  - id: open_leave_form
+    actor: applicant
+    action: wap_click
+    selector: "[data-testid='workflow-new-leave_request']"
+  - id: submit_leave
+    actor: applicant
+    action: wap_fill_and_submit_leave
+    params:
+      leave_type: sick
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: App WebView 自动化测试请假两天
+    selectors:
+      leave_type: "[data-testid='leave-type-select']"
+      start_date: "[data-testid='leave-start-date']"
+      end_date: "[data-testid='leave-end-date']"
+      reason: "[data-testid='leave-reason-input']"
+      submit: "[data-testid='leave-submit-button']"
+    save:
+      process_instance_id: $url.params.id
+  - id: manager_approve
+    actor: manager
+    action: wap_approve_task_for_instance
+    params:
+      instance_id: $submit_leave.process_instance_id
+      note: 直属上级同意
+    selectors:
+      task: "[data-testid^='workflow-task-']"
+      note: "[data-testid='workflow-review-note']"
+      approve: "[data-testid='workflow-action-approve']"
+expected:
+  - type: assert
+    source: $manager_approve.response
+    path: data.status
+    operator: eq
+    value: approved
+  - type: http_call
+    id: latest_leave
+    method: GET
+    url: /debug/leave/latest?username=konglingjia
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.status
+    operator: eq
+    value: approved
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.days
+    operator: eq
+    value: 2
+  - type: ui_assert
+    actor: manager
+    selector: "[data-testid='workflow-timeline-manager_review']"
+    operator: contains
+    value: 已通过
+artifacts: [device_screenshot, webview_screenshot, requests_json, report_md]

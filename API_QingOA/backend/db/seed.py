@@ -6,13 +6,42 @@ from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from backend.core.security import hash_password
-from .models import KeyResult, Menu, Notice, NoticeRead, Okr, PunchPoint, PunchRecord, User
+from .models import (
+    KeyResult,
+    ImConversation,
+    ImConversationMember,
+    ImFriend,
+    ImMessage,
+    LeaveAttachment,
+    LeaveRequest,
+    Menu,
+    Notice,
+    NoticeRead,
+    Okr,
+    ProcessInstance,
+    ProcessTask,
+    PunchAppeal,
+    PunchPoint,
+    PunchRecord,
+    UploadedFile,
+    User,
+)
 
 
 def reset_database(db: Session) -> None:
+    db.execute(delete(ImMessage))
+    db.execute(delete(ImConversationMember))
+    db.execute(delete(ImConversation))
+    db.execute(delete(ImFriend))
     db.execute(delete(KeyResult))
     db.execute(delete(Okr))
     db.execute(delete(PunchRecord))
+    db.execute(delete(LeaveAttachment))
+    db.execute(delete(UploadedFile))
+    db.execute(delete(ProcessTask))
+    db.execute(delete(ProcessInstance))
+    db.execute(delete(LeaveRequest))
+    db.execute(delete(PunchAppeal))
     db.execute(delete(NoticeRead))
     db.execute(delete(Menu))
     db.execute(delete(Notice))
@@ -25,7 +54,10 @@ def reset_database(db: Session) -> None:
         db.execute(
             text(
                 "DELETE FROM sqlite_sequence "
-                "WHERE name IN ('users','punch_points','punch_records','notice_reads','notices','menus','okrs','key_results')"
+                "WHERE name IN ('users','punch_points','punch_records','punch_appeals','leave_requests',"
+                "'process_instances','process_tasks','notice_reads','notices','menus','okrs','key_results',"
+                "'uploaded_files','leave_attachments','im_friends','im_conversations',"
+                "'im_conversation_members','im_messages')"
             )
         )
     db.commit()
@@ -105,11 +137,24 @@ def reset_database(db: Session) -> None:
             office_location="北京总部",
             is_hr=1,
         ),
+        User(
+            username="thanos",
+            password=password,
+            name="灭霸",
+            dept="管理层",
+            role="高管",
+            has_punch_permission=1,
+            avatar_url="",
+            phone="13800000007",
+            email="thanos@qingoa.local",
+            office_location="北京总部",
+        ),
     ]
     db.add_all(users)
     db.flush()
     user_map = {user.username: user for user in users}
     manager = user_map["manager"]
+    manager.manager_id = user_map["thanos"].id
     for username in ("konglingjia", "faraday", "nopunch", "expired"):
         user_map[username].manager_id = manager.id
 
@@ -161,13 +206,13 @@ def reset_database(db: Session) -> None:
             sort_order=1,
         ),
         Menu(
-            name="审批流",
+            name="流程中心",
             icon="ic_workflow",
             action="native",
-            target="WorkflowActivity",
+            target="WorkflowWebActivity",
             section="home",
-            enabled=0,
-            disabled_reason="功能开发中",
+            enabled=1,
+            disabled_reason=None,
             sort_order=2,
         ),
         Menu(
@@ -189,6 +234,36 @@ def reset_database(db: Session) -> None:
             enabled=1,
             disabled_reason=None,
             sort_order=1,
+        ),
+        Menu(
+            name="补卡申诉",
+            icon="ic_punch_record",
+            action="native",
+            target="PunchAppealActivity",
+            section="mine",
+            enabled=1,
+            disabled_reason=None,
+            sort_order=2,
+        ),
+        Menu(
+            name="待我审批",
+            icon="ic_workflow",
+            action="native",
+            target="PunchAppealReviewActivity",
+            section="mine",
+            enabled=1,
+            disabled_reason=None,
+            sort_order=3,
+        ),
+        Menu(
+            name="流程中心",
+            icon="ic_workflow",
+            action="native",
+            target="WorkflowWebActivity",
+            section="mine",
+            enabled=1,
+            disabled_reason=None,
+            sort_order=4,
         ),
     ]
     db.add_all(menus)
@@ -219,13 +294,13 @@ def ensure_v15_static_data(db: Session) -> None:
             "sort_order": 1,
         },
         {
-            "name": "审批流",
+            "name": "流程中心",
             "icon": "ic_workflow",
             "action": "native",
-            "target": "WorkflowActivity",
+            "target": "WorkflowWebActivity",
             "section": "home",
-            "enabled": 0,
-            "disabled_reason": "功能开发中",
+            "enabled": 1,
+            "disabled_reason": None,
             "sort_order": 2,
         },
         {
@@ -248,7 +323,38 @@ def ensure_v15_static_data(db: Session) -> None:
             "disabled_reason": None,
             "sort_order": 1,
         },
+        {
+            "name": "补卡申诉",
+            "icon": "ic_punch_record",
+            "action": "native",
+            "target": "PunchAppealActivity",
+            "section": "mine",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 2,
+        },
+        {
+            "name": "待我审批",
+            "icon": "ic_workflow",
+            "action": "native",
+            "target": "PunchAppealReviewActivity",
+            "section": "mine",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 3,
+        },
+        {
+            "name": "流程中心",
+            "icon": "ic_workflow",
+            "action": "native",
+            "target": "WorkflowWebActivity",
+            "section": "mine",
+            "enabled": 1,
+            "disabled_reason": None,
+            "sort_order": 4,
+        },
     ]
+    db.execute(delete(Menu).where(Menu.target == "WorkflowActivity"))
     db.execute(delete(Menu).where(Menu.section == "mine").where(Menu.target == "OkrListActivity"))
     for spec in menu_specs:
         row = db.scalar(select(Menu).where(Menu.name == spec["name"]).where(Menu.section == spec["section"]))
@@ -332,6 +438,17 @@ def ensure_v16_users(db: Session) -> None:
             "office_location": "北京总部",
             "is_hr": 1,
         },
+        {
+            "username": "thanos",
+            "name": "灭霸",
+            "dept": "管理层",
+            "role": "高管",
+            "has_punch_permission": 1,
+            "phone": "13800000007",
+            "email": "thanos@qingoa.local",
+            "office_location": "北京总部",
+            "is_hr": 0,
+        },
     ]
     for spec in specs:
         user = db.scalar(select(User).where(User.username == spec["username"]))
@@ -348,6 +465,9 @@ def ensure_v16_users(db: Session) -> None:
             user.avatar_url = ""
     db.flush()
     manager = db.scalar(select(User).where(User.username == "manager"))
+    executive = db.scalar(select(User).where(User.username == "thanos"))
+    if manager is not None and executive is not None:
+        manager.manager_id = executive.id
     if manager is not None:
         for username in ("konglingjia", "faraday", "nopunch", "expired"):
             user = db.scalar(select(User).where(User.username == username))

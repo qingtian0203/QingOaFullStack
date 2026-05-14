@@ -1,0 +1,56 @@
+id: qingoa.okr.delete_and_forbidden_cross_user
+title: OKR 删除和跨用户访问拦截
+version: v1.7
+business_line: okr
+priority: P2
+layers: [api]
+actors:
+  employee: konglingjia
+  other: faraday
+preconditions:
+  - type: http_call
+    id: reset_okrs
+    method: POST
+    url: /debug/okr/reset
+    body: {usernames: [konglingjia, faraday]}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: login
+    actor: other
+    username: faraday
+    password: "123456"
+steps:
+  - id: employee_list
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/okr/list
+  - id: other_list
+    actor: other
+    action: http_call
+    method: GET
+    url: /api/okr/list
+  - id: cross_user_detail
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/okr/$other_list.response.data.list.0.id
+  - id: delete_okr
+    actor: employee
+    action: http_call
+    method: DELETE
+    url: /api/okr/$employee_list.response.data.list.0.id
+expected:
+  - type: assert
+    source: $cross_user_detail.response
+    path: code
+    operator: eq
+    value: 1010
+  - type: assert
+    source: $delete_okr.response
+    path: code
+    operator: eq
+    value: 0
+artifacts: [requests_json, report_md]

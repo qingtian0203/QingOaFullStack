@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "templates": [
+    {
+      "id": "punch_appeal",
+      "biz_type": "punch_appeal",
+      "title": "补卡申诉",
+      "description": "上班卡或下班卡异常时，提交补卡说明并进入两级审批。",
+      "enabled": true,
+      "optional": true,
+      "entry": "native:PunchAppealActivity",
+      "nodes": [
+        {
+          "key": "manager_review",
+          "title": "直属上级审批",
+          "assignee_role": "manager",
+          "actions": ["approve", "reject"],
+          "next_on_approve": "hr_review",
+          "next_on_reject": "end_rejected"
+        },
+        {
+          "key": "hr_review",
+          "title": "HR 审批",
+          "assignee_role": "hr",
+          "actions": ["approve", "reject"],
+          "next_on_approve": "end_approved",
+          "next_on_reject": "end_rejected"
+        }
+      ]
+    },
+    {
+      "id": "leave_request",
+      "biz_type": "leave_request",
+      "title": "请假申请",
+      "description": "提交年假、病假或事假，超过 3 天进入 HR 二审。",
+      "enabled": true,
+      "optional": false,
+      "entry": "wap:#/new/leave",
+      "nodes": [
+        {
+          "key": "manager_review",
+          "title": "直属上级审批",
+          "assignee_role": "manager",
+          "actions": ["approve", "reject", "return"],
+          "next_on_approve": "hr_review_or_end",
+          "next_on_reject": "end_rejected",
+          "next_on_return": "applicant_resubmit"
+        },
+        {
+          "key": "hr_review",
+          "title": "HR 二审",
+          "assignee_role": "hr",
+          "actions": ["approve", "reject"],
+          "condition": "days > 3",
+          "next_on_approve": "end_approved",
+          "next_on_reject": "end_rejected"
+        },
+        {
+          "key": "applicant_resubmit",
+          "title": "申请人修改重提",
+          "assignee_role": "applicant",
+          "actions": ["resubmit", "cancel"],
+          "next_on_resubmit": "manager_review",
+          "next_on_cancel": "end_cancelled"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+id: qingoa.wap.available_actions_buttons
+title: WAP 按 available_actions 渲染审批按钮
+version: v1.7
+business_line: workflow_wap
+priority: P0
+layers: [wap, api]
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: submit_leave
+    actor: applicant
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: annual
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: 验证按钮权限
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+steps:
+  - id: open_as_applicant
+    actor: applicant
+    action: wap_open
+    url: /wap/#/workflow/detail/$submit_leave.process_instance_id
+  - id: applicant_can_cancel
+    actor: applicant
+    action: ui_assert
+    selector: "[data-testid='workflow-action-cancel']"
+    operator: exists
+  - id: applicant_cannot_approve
+    actor: applicant
+    action: ui_assert
+    selector: "[data-testid='workflow-action-approve']"
+    operator: not_exists
+  - id: open_as_manager
+    actor: manager
+    action: wap_open
+    url: /wap/#/workflow/detail/$submit_leave.process_instance_id
+  - id: manager_can_approve
+    actor: manager
+    action: ui_assert
+    selector: "[data-testid='workflow-action-approve']"
+    operator: exists
+  - id: manager_can_reject
+    actor: manager
+    action: ui_assert
+    selector: "[data-testid='workflow-action-reject']"
+    operator: exists
+  - id: manager_can_return
+    actor: manager
+    action: ui_assert
+    selector: "[data-testid='workflow-action-return']"
+    operator: exists
+expected: []
+artifacts: [screenshot, report_md]

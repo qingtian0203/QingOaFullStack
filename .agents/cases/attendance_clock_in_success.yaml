@@ -1,0 +1,57 @@
+id: qingoa.attendance.clock_in_success
+title: 上班打卡成功
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [app, api, debug]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: freeze_time
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-05-04 09:01:00"}
+  - type: http_call
+    id: reset_punch_date
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-05-04"}
+steps:
+  - id: open_punch_page
+    actor: employee
+    action: app_click
+    target: qingoa_home_punch_entry
+    wait_for: qingoa_punch_clock_in_button
+  - id: input_location
+    actor: employee
+    action: app_fill
+    fields:
+      qingoa_punch_test_lat_input: "39.811774"
+      qingoa_punch_test_lng_input: "116.295234"
+  - id: clock_in
+    actor: employee
+    action: app_click
+    target: qingoa_punch_clock_in_button
+    wait_for: qingoa_punch_clock_out_button
+    wait_timeout: 8
+expected:
+  - type: http_call
+    id: latest
+    method: GET
+    url: /debug/attendance/latest?username=konglingjia&punch_type=clock_in
+  - type: assert
+    source: $latest.response
+    path: data.record.punch_type
+    operator: eq
+    value: clock_in
+  - type: assert
+    source: $latest.response
+    path: data.record.point_name
+    operator: eq
+    value: 晴天打卡点
+  - type: request_log
+    method: POST
+    path: /api/punch/clock
+    response_code: 0
+artifacts: [screenshot_before, screenshot_after, requests_json, debug_json, report_md]

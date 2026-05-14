@@ -1,0 +1,59 @@
+id: qingoa.workflow.urge_visible_in_urged_bucket
+title: 催办后任务进入 urged bucket
+version: v1.7
+business_line: leave_workflow_api
+priority: P0
+layers: [api, debug]
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+steps:
+  - id: submit_leave
+    actor: applicant
+    action: http_call
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: annual
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: 用于验证催办列表
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+  - id: urge_instance
+    actor: applicant
+    action: http_call
+    method: POST
+    url: /api/workflow/instances/$submit_leave.process_instance_id/urge
+  - id: manager_urged_tasks
+    actor: manager
+    action: http_call
+    method: GET
+    url: /api/workflow/tasks?bucket=urged
+expected:
+  - type: assert
+    source: $urge_instance.response
+    path: data.urged
+    operator: eq
+    value: true
+  - type: assert
+    source: $manager_urged_tasks.response
+    path: data.tasks
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $manager_urged_tasks.response
+    path: data.tasks.0.instance_id
+    operator: eq
+    value: $submit_leave.process_instance_id
+  - type: assert
+    source: $manager_urged_tasks.response
+    path: data.tasks.0.urged
+    operator: eq
+    value: true
+artifacts: [requests_json, debug_json, report_md]

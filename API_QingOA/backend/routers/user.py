@@ -11,6 +11,7 @@ from backend.db.database import get_db
 from backend.db.models import User
 from backend.dependencies import get_current_user
 from backend.schemas.user import UserAvatarUpdateRequest, UserProfileUpdateRequest
+from backend.services import file_service
 
 router = APIRouter(prefix="/api/user", tags=["user"])
 
@@ -50,9 +51,13 @@ def update_avatar(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    avatar_url = body.avatar_url.strip()
-    if not _is_valid_avatar_url(avatar_url):
-        raise ApiError(AVATAR_URL_INVALID, "头像地址必须是 http 或 https 图片 URL")
+    avatar_url = _clean_optional(body.avatar_url)
+    file_id = _clean_optional(body.file_id)
+    if file_id:
+        uploaded = file_service.get_uploaded_file(db, file_id, user=user, usage="avatar")
+        avatar_url = uploaded.url
+    elif not _is_valid_avatar_url(avatar_url):
+        raise ApiError(AVATAR_URL_INVALID, "头像地址必须是 http 或 https 图片 URL，或传入已上传头像 file_id")
     user.avatar_url = avatar_url
     db.commit()
     db.refresh(user)

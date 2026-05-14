@@ -12,6 +12,7 @@ import android.widget.ScrollView;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.qingtian.app_qingoa.net.ApiClient;
 import com.qingtian.app_qingoa.session.UserSession;
 import com.qingtian.app_qingoa.ui.auth.LoginActivity;
 
@@ -29,6 +30,7 @@ public abstract class BaseActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // 初始化 UserSession（若已初始化则无副作用）
         UserSession.getInstance().init(this);
+        ApiClient.init(this);
     }
 
     /**

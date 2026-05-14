@@ -1,0 +1,49 @@
+id: qingoa.profile_auth.cache_then_network
+title: 我的页先缓存后网络刷新 profile
+version: v1.7
+business_line: profile_auth
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_profile
+    method: POST
+    url: /debug/profile/reset
+    body: {username: konglingjia}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: profile_before
+    actor: employee
+    method: GET
+    url: /api/user/profile
+steps:
+  - id: open_mine_page
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_mine
+    wait_for: qingoa_mine_profile_card
+    wait_timeout: 8
+  - id: profile_refresh
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/user/profile
+expected:
+  - type: assert
+    source: $profile_before.response
+    path: data.username
+    operator: eq
+    value: konglingjia
+  - type: assert
+    source: $profile_refresh.response
+    path: data.name
+    operator: exists
+  - type: ui_assert
+    selector: qingoa_mine_profile_card
+    operator: exists
+artifacts: [screenshot, requests_json, report_md]

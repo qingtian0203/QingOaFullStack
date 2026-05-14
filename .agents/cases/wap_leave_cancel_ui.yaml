@@ -1,0 +1,54 @@
+id: qingoa.wap.leave_cancel_ui
+title: WAP 申请人取消请假流程
+version: v1.7
+business_line: workflow_wap
+priority: P0
+layers: [wap, api, debug]
+actors:
+  applicant: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: submit_leave
+    actor: applicant
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: annual
+      start_date: "{{today}}"
+      end_date: "{{today}}"
+      reason: WAP UI 自动化取消请假流程
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+steps:
+  - id: open_cancel_detail
+    actor: applicant
+    action: wap_open
+    url: /wap/#/workflow/detail/$submit_leave.process_instance_id
+  - id: cancel_from_ui
+    actor: applicant
+    action: wap_click
+    selector: "[data-testid='workflow-action-cancel']"
+expected:
+  - type: http_call
+    id: latest_leave
+    method: GET
+    url: /debug/leave/latest?username=konglingjia
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.status
+    operator: eq
+    value: cancelled
+  - type: ui_assert
+    actor: applicant
+    selector: "[data-testid='workflow-detail-head']"
+    operator: contains
+    value: 已取消
+  - type: ui_assert
+    actor: applicant
+    selector: "[data-testid='workflow-action-cancel']"
+    operator: not_exists
+artifacts: [screenshot, debug_json, report_md]

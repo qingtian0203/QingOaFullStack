@@ -84,11 +84,59 @@
                 android:textColor="@color/oa_text_secondary"
                 android:textSize="13sp" />
 
+            <RadioGroup
+                android:id="@+id/rg_api_environment"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="18dp"
+                android:background="@drawable/bg_input"
+                android:contentDescription="qingoa_login_api_environment"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp">
+
+                <RadioButton
+                    android:id="@+id/rb_env_local"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/oa_primary"
+                    android:contentDescription="qingoa_login_env_local"
+                    android:gravity="center"
+                    android:text="本地"
+                    android:textColor="@color/oa_text_primary"
+                    android:textSize="13sp" />
+
+                <RadioButton
+                    android:id="@+id/rb_env_remote"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:buttonTint="@color/oa_primary"
+                    android:contentDescription="qingoa_login_env_remote"
+                    android:gravity="center"
+                    android:text="公网"
+                    android:textColor="@color/oa_text_primary"
+                    android:textSize="13sp" />
+            </RadioGroup>
+
+            <TextView
+                android:id="@+id/tv_api_environment_url"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:contentDescription="qingoa_login_api_environment_url"
+                android:ellipsize="middle"
+                android:maxLines="1"
+                android:textColor="@color/oa_text_muted"
+                android:textSize="11sp" />
+
             <com.google.android.material.textfield.TextInputLayout
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="22dp"
+                android:layout_marginTop="16dp"
                 android:hint="账号"
                 app:boxBackgroundColor="#F8FAFF"
                 app:boxCornerRadiusBottomEnd="14dp"

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/oa_bg"
+    android:contentDescription="qingoa_chat_detail_page"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="96dp"
+        android:gravity="bottom|center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingBottom="14dp">
+
+        <TextView
+            android:id="@+id/btn_back"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_back_button"
+            android:contentDescription="qingoa_chat_detail_back"
+            android:gravity="center"
+            android:text="‹"
+            android:textColor="@color/oa_text_primary"
+            android:textSize="28sp" />
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/oa_text_primary"
+            android:textSize="21sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_messages"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:clipToPadding="false"
+        android:contentDescription="qingoa_chat_message_list"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:paddingBottom="12dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="72dp"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp">
+
+        <TextView
+            android:id="@+id/btn_image"
+            android:layout_width="42dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_back_button"
+            android:contentDescription="qingoa_chat_image_button"
+            android:gravity="center"
+            android:text="+"
+            android:textColor="@color/oa_primary"
+            android:textSize="24sp"
+            android:textStyle="bold" />
+
+        <EditText
+            android:id="@+id/et_message"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="10dp"
+            android:layout_marginEnd="10dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_input"
+            android:contentDescription="qingoa_chat_message_input"
+            android:hint="输入消息"
+            android:inputType="textMultiLine"
+            android:maxLines="3"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="@color/oa_text_primary"
+            android:textColorHint="@color/oa_text_muted"
+            android:textSize="15sp" />
+
+        <TextView
+            android:id="@+id/btn_send"
+            android:layout_width="62dp"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_primary_button"
+            android:contentDescription="qingoa_chat_send_button"
+            android:gravity="center"
+            android:text="发送"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

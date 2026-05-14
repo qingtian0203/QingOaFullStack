@@ -1,0 +1,103 @@
+id: qingoa.attendance.appeal_reject
+title: 补卡申诉管理者驳回后流程结束
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [app, api, debug]
+actors:
+  employee: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: reset_rejected_punch_date
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-05-02"}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: login
+    actor: manager
+    username: manager
+    password: "123456"
+steps:
+  - id: open_mine_tab
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_mine
+    wait_for: qingoa_mine_punch_appeal_entry
+  - id: open_appeal_page
+    actor: employee
+    action: app_click
+    target: qingoa_mine_punch_appeal_entry
+    wait_for: qingoa_punch_appeal_date_input
+  - id: choose_clock_out
+    actor: employee
+    action: app_click
+    target: qingoa_punch_appeal_clock_out_radio
+  - id: fill_appeal_form
+    actor: employee
+    action: app_fill
+    fields:
+      qingoa_punch_appeal_date_input: "2026-05-02"
+      qingoa_punch_appeal_expect_time_input: "18:10:00"
+      qingoa_punch_appeal_reason_input: "forgot_clock_out"
+  - id: submit_appeal_form
+    actor: employee
+    action: app_click
+    target: qingoa_punch_appeal_submit_button
+  - id: wait_appeal_submit
+    actor: employee
+    action: app_wait
+    seconds: 1.5
+  - id: manager_pending
+    actor: manager
+    action: http_call
+    method: GET
+    url: /api/punch/appeals/pending-review
+    save:
+      appeal_id: $manager_pending.response.data.list.0.id
+  - id: manager_reject
+    actor: manager
+    action: http_call
+    method: POST
+    url: /api/punch/appeals/$manager_pending.appeal_id/review
+    body:
+      action: reject
+      note: 证明不足
+  - id: debug_state
+    action: http_call
+    method: GET
+    url: /debug/state
+  - id: rejected_makeup_record
+    actor: employee
+    action: http_call
+    method: GET
+    url: /debug/attendance/latest?username=konglingjia&punch_type=clock_out&punch_date=2026-05-02
+expected:
+  - type: assert
+    source: $manager_pending.response
+    path: data.list.0.status
+    operator: eq
+    value: submitted
+  - type: assert
+    source: $manager_reject.response
+    path: data.status
+    operator: eq
+    value: rejected_by_manager
+  - type: assert
+    source: $debug_state.response
+    path: data.process_instances.0.status
+    operator: eq
+    value: rejected
+  - type: assert
+    source: $rejected_makeup_record.response
+    path: data.record
+    operator: eq
+    value: null
+artifacts: [requests_json, debug_json, report_md]

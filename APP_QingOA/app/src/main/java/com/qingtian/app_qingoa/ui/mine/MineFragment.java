@@ -16,6 +16,7 @@ import com.qingtian.app_qingoa.databinding.DialogAvatarUrlBinding;
 import com.qingtian.app_qingoa.databinding.DialogProfileEditBinding;
 import com.qingtian.app_qingoa.base.BaseActivity;
 import com.qingtian.app_qingoa.databinding.FragmentMineBinding;
+import com.qingtian.app_qingoa.model.BadgeSummaryData;
 import com.qingtian.app_qingoa.model.MenuData;
 import com.qingtian.app_qingoa.model.UserInfo;
 import com.qingtian.app_qingoa.net.AvatarUpdateRequest;
@@ -24,8 +25,10 @@ import com.qingtian.app_qingoa.net.ApiResponse;
 import com.qingtian.app_qingoa.net.ProfileUpdateRequest;
 import com.qingtian.app_qingoa.session.UserSession;
 import com.qingtian.app_qingoa.ui.auth.LoginActivity;
+import com.qingtian.app_qingoa.ui.punch.PunchAppealActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchCardActivity;
 import com.qingtian.app_qingoa.ui.punch.PunchRecordListActivity;
+import com.qingtian.app_qingoa.ui.workflow.WorkflowWebActivity;
 import com.qingtian.app_qingoa.util.AppRouteWhitelist;
 import com.qingtian.app_qingoa.util.AvatarLoader;
 import com.qingtian.app_qingoa.util.ToastUtils;
@@ -41,6 +44,8 @@ import retrofit2.Response;
 public class MineFragment extends Fragment {
 
     private FragmentMineBinding mBinding;
+    private MineMenuAdapter mMineMenuAdapter;
+    private BadgeSummaryData mBadgeSummary;
 
     @Nullable
     @Override
@@ -71,6 +76,7 @@ public class MineFragment extends Fragment {
     public void onResume() {
         super.onResume();
         loadProfile();
+        loadBadgeSummary();
     }
 
     private void showUserInfo(UserInfo info) {
@@ -240,7 +246,7 @@ public class MineFragment extends Fragment {
         mBinding.rvMineMenu.setVisibility(View.VISIBLE);
         // 纵向列表展示（与首页九宫格区分）
         mBinding.rvMineMenu.setLayoutManager(new LinearLayoutManager(requireContext()));
-        mBinding.rvMineMenu.setAdapter(new MineMenuAdapter(data.getMenus(), item -> {
+        mMineMenuAdapter = new MineMenuAdapter(data.getMenus(), item -> {
             if (!item.isEnabled()) {
                 String reason = item.getDisabledReason() != null
                         ? item.getDisabledReason() : "功能暂未开放";
@@ -248,7 +254,37 @@ public class MineFragment extends Fragment {
                 return;
             }
             navigateMineTarget(item.getTarget());
-        }));
+        });
+        mMineMenuAdapter.setBadgeSummary(mBadgeSummary);
+        mBinding.rvMineMenu.setAdapter(mMineMenuAdapter);
+    }
+
+    private void loadBadgeSummary() {
+        ApiClient.getService().getBadgeSummary().enqueue(new Callback<ApiResponse<BadgeSummaryData>>() {
+            @Override
+            public void onResponse(Call<ApiResponse<BadgeSummaryData>> call,
+                                   Response<ApiResponse<BadgeSummaryData>> response) {
+                if (!isAdded()) return;
+                if (response.isSuccessful() && response.body() != null) {
+                    ApiResponse<BadgeSummaryData> body = response.body();
+                    if (body.isTokenExpired()) {
+                        ((BaseActivity) requireActivity()).handleTokenExpired();
+                        return;
+                    }
+                    if (body.isSuccess()) {
+                        mBadgeSummary = body.getData();
+                        if (mMineMenuAdapter != null) {
+                            mMineMenuAdapter.setBadgeSummary(mBadgeSummary);
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(Call<ApiResponse<BadgeSummaryData>> call, Throwable t) {
+                // 红点加载失败不阻塞我的页主流程。
+            }
+        });
     }
 
     /** 我的页路由，同样走白名单校验 */
@@ -263,6 +299,17 @@ public class MineFragment extends Fragment {
                 break;
             case "PunchRecordListActivity":
                 startActivity(new Intent(requireContext(), PunchRecordListActivity.class));
+                break;
+            case "PunchAppealActivity":
+                startActivity(new Intent(requireContext(), PunchAppealActivity.class));
+                break;
+            case "PunchAppealReviewActivity":
+                Intent reviewIntent = new Intent(requireContext(), PunchAppealActivity.class);
+                reviewIntent.putExtra(PunchAppealActivity.EXTRA_MODE, PunchAppealActivity.MODE_REVIEW);
+                startActivity(reviewIntent);
+                break;
+            case "WorkflowWebActivity":
+                startActivity(new Intent(requireContext(), WorkflowWebActivity.class));
                 break;
             default:
                 ToastUtils.show(requireContext(), "功能开发中");

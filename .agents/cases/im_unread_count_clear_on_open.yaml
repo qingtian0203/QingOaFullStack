@@ -1,0 +1,67 @@
+id: qingoa.im_chat.unread_count_clear_on_open
+title: IM 未读数进入会话后清零
+version: v1.8
+business_line: im_chat
+priority: P0
+layers: [app, api, debug]
+actors:
+  employee: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_im
+    method: POST
+    url: /debug/im/reset
+    body: {usernames: [konglingjia, manager]}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: login
+    actor: manager
+    username: manager
+    password: "123456"
+  - type: http_call
+    id: conversation
+    actor: manager
+    method: POST
+    url: /api/im/conversations/single
+    body: {peer_user_id: 1}
+  - type: http_call
+    id: send_message
+    actor: manager
+    method: POST
+    url: /api/im/conversations/$conversation.response.data.id/messages
+    body:
+      message_type: text
+      content: 请看一下今天的审批材料
+steps:
+  - id: open_chat_tab
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_chat
+    wait_for: qingoa_chat_conversation_$conversation.response.data.id
+    wait_timeout: 8
+  - id: open_conversation
+    actor: employee
+    action: app_click
+    target: qingoa_chat_conversation_$conversation.response.data.id
+    wait_for: qingoa_chat_message_list
+    wait_timeout: 8
+expected:
+  - type: http_call
+    id: conversations_after
+    actor: employee
+    method: GET
+    url: /api/im/conversations
+  - type: assert
+    source: $conversations_after.response
+    path: data.list.0.unread_count
+    operator: eq
+    value: 0
+  - type: assert
+    source: $send_message.response
+    path: data.content
+    operator: eq
+    value: 请看一下今天的审批材料
+artifacts: [screenshot_before, screenshot_after, requests_json, debug_json, report_md]

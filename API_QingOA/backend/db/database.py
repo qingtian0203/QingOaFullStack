@@ -39,6 +39,9 @@ def migrate_existing_sqlite_schema() -> None:
                 conn.execute(text("ALTER TABLE punch_records ADD COLUMN punch_type TEXT NOT NULL DEFAULT 'clock_in'"))
             if "punch_date" not in punch_columns:
                 conn.execute(text("ALTER TABLE punch_records ADD COLUMN punch_date TEXT NOT NULL DEFAULT ''"))
+            _ensure_column(conn, punch_columns, "punch_records", "status", "TEXT NOT NULL DEFAULT 'normal'")
+            _ensure_column(conn, punch_columns, "punch_records", "source", "TEXT NOT NULL DEFAULT 'manual'")
+            _ensure_column(conn, punch_columns, "punch_records", "appeal_id", "INTEGER DEFAULT NULL")
             conn.execute(
                 text(
                     "UPDATE punch_records "
@@ -59,6 +62,10 @@ def migrate_existing_sqlite_schema() -> None:
             _ensure_column(conn, user_columns, "users", "office_location", "TEXT DEFAULT NULL")
             _ensure_column(conn, user_columns, "users", "manager_id", "INTEGER DEFAULT NULL")
             _ensure_column(conn, user_columns, "users", "is_hr", "INTEGER NOT NULL DEFAULT 0")
+            if "updated_at" not in user_columns:
+                conn.execute(text("ALTER TABLE users ADD COLUMN updated_at DATETIME DEFAULT NULL"))
+                user_columns.add("updated_at")
+            conn.execute(text("UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE updated_at IS NULL"))
 
 
 def _column_names(conn, table_name: str) -> set[str]:

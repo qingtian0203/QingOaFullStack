@@ -4,5 +4,7 @@ __pycache__/
 .pytest_cache/
 data/*.db
 data/*.db-*
+server.log
+server.pid
 .DS_Store
-
+static/uploads/

@@ -1,0 +1,70 @@
+id: qingoa.home_notices.detail_mark_read
+title: 公告详情与标记已读
+version: v1.7
+business_line: home_notices
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_notice_read
+    method: POST
+    url: /debug/notices/reset-read
+    body: {username: konglingjia, notice_id: 3}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: notice_detail_before
+    actor: employee
+    method: GET
+    url: /api/notices/3
+  - type: http_call
+    id: mark_read
+    actor: employee
+    method: POST
+    url: /api/notices/3/read
+  - type: http_call
+    id: notice_detail_after
+    actor: employee
+    method: GET
+    url: /api/notices/3
+  - type: http_call
+    id: unread_after
+    actor: employee
+    method: GET
+    url: /api/home/unread-count
+steps:
+  - id: open_notice_detail
+    actor: employee
+    action: app_click
+    target: qingoa_notice_item_3
+    wait_for: qingoa_notice_detail_content
+    wait_timeout: 8
+expected:
+  - type: assert
+    source: $notice_detail_before.response
+    path: data.id
+    operator: eq
+    value: 3
+  - type: assert
+    source: $mark_read.response
+    path: code
+    operator: eq
+    value: 0
+  - type: assert
+    source: $notice_detail_after.response
+    path: data.is_read
+    operator: eq
+    value: true
+  - type: assert
+    source: $unread_after.response
+    path: data.notice_unread
+    operator: gte
+    value: 0
+  - type: ui_assert
+    selector: qingoa_notice_detail_content
+    operator: exists
+artifacts: [requests_json, report_md]

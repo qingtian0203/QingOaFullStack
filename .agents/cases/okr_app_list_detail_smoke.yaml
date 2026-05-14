@@ -1,0 +1,46 @@
+id: qingoa.okr.app_list_detail_smoke
+title: OKR App 入口列表详情 smoke
+version: v1.71
+business_line: okr
+priority: P2
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_okrs
+    method: POST
+    url: /debug/okr/reset
+    body: {usernames: [konglingjia]}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+steps:
+  - id: okr_list
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/okr/list
+  - id: okr_detail
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/okr/$okr_list.response.data.list.0.id
+expected:
+  - type: assert
+    source: $okr_list.response
+    path: data.list
+    operator: len_gte
+    value: 1
+  - type: assert
+    source: $okr_detail.response
+    path: data.id
+    operator: eq
+    value: $okr_list.response.data.list.0.id
+  - type: assert
+    source: $okr_detail.response
+    path: data.key_results
+    operator: len_gte
+    value: 1
+artifacts: [requests_json, report_md]

@@ -1,0 +1,56 @@
+id: qingoa.wap.leave_reject_ui
+title: WAP 直属上级驳回请假流程
+version: v1.7
+business_line: workflow_wap
+priority: P0
+layers: [wap, api, debug]
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: submit_leave
+    actor: applicant
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: personal
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: WAP UI 自动化驳回请假流程
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+steps:
+  - id: open_manager_detail
+    actor: manager
+    action: wap_open
+    url: /wap/#/workflow/detail/$submit_leave.process_instance_id
+  - id: reject_from_ui
+    actor: manager
+    action: wap_click
+    selector: "[data-testid='workflow-action-reject']"
+expected:
+  - type: http_call
+    id: latest_leave
+    method: GET
+    url: /debug/leave/latest?username=konglingjia
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.status
+    operator: eq
+    value: rejected
+  - type: ui_assert
+    actor: manager
+    selector: "[data-testid='workflow-detail-head']"
+    operator: contains
+    value: 已驳回
+  - type: ui_assert
+    actor: manager
+    selector: "[data-testid='workflow-timeline-manager_review']"
+    operator: contains
+    value: 已驳回
+artifacts: [screenshot, debug_json, report_md]

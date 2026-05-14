@@ -114,6 +114,7 @@ public class PunchCardActivity extends BaseActivity {
             mBinding.tvClockInTime.setText("等待打卡");
             mBinding.btnClockIn.setVisibility(View.VISIBLE);
             mBinding.btnClockIn.setText("上班打卡\n" + formatActionTime());
+            mBinding.btnClockIn.setContentDescription("qingoa_punch_clock_in_button");
             mBinding.btnClockIn.setBackgroundResource(R.drawable.bg_punch_circle);
         }
 
@@ -131,6 +132,7 @@ public class PunchCardActivity extends BaseActivity {
             mBinding.btnClockOut.setAlpha(1.0f);
             mBinding.btnClockOut.setBackgroundResource(R.drawable.bg_punch_circle);
             mBinding.btnClockOut.setText("更新打卡\n" + formatActionTime());
+            mBinding.btnClockOut.setContentDescription("qingoa_punch_clock_out_update_button");
         } else {
             mBinding.tvClockOutStatus.setText("未打卡");
             mBinding.tvClockOutStatus.setTextColor(0xFFA8AFBD);
@@ -139,6 +141,7 @@ public class PunchCardActivity extends BaseActivity {
             mBinding.tvClockOutTime.setVisibility(View.VISIBLE);
             mBinding.tvClockOutTime.setText(clockInDone ? "等待打卡" : "上班卡完成后开启");
             mBinding.btnClockOut.setText("下班打卡\n" + formatActionTime());
+            mBinding.btnClockOut.setContentDescription("qingoa_punch_clock_out_button");
             mBinding.btnClockOut.setEnabled(clockInDone);
             mBinding.btnClockOut.setVisibility(clockInDone ? View.VISIBLE : View.GONE);
             mBinding.btnClockOut.setAlpha(clockInDone ? 1.0f : 0.45f);

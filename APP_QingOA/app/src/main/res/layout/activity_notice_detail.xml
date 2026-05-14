@@ -3,6 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/oa_bg"
+    android:contentDescription="qingoa_notice_detail_page"
     android:fillViewport="true">
 
     <LinearLayout
@@ -46,6 +47,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="14dp"
             android:background="@drawable/bg_detail_header"
+            android:contentDescription="qingoa_notice_detail_content"
             android:orientation="vertical"
             android:padding="22dp"
             android:visibility="gone">
@@ -54,6 +56,7 @@
                 android:id="@+id/tv_notice_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:contentDescription="qingoa_notice_detail_title"
                 android:textColor="@color/oa_text_primary"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -77,6 +80,7 @@
                 android:id="@+id/tv_notice_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:contentDescription="qingoa_notice_detail_body"
                 android:lineSpacingExtra="4dp"
                 android:textColor="@color/oa_text_secondary"
                 android:textSize="15sp" />

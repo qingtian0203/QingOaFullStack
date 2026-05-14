@@ -1,0 +1,52 @@
+id: qingoa.attendance.clock_in_out_of_range
+title: 上班打卡超出范围
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [app, api, debug]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: freeze_time
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-05-04 09:01:00"}
+  - type: http_call
+    id: reset_punch_date
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-05-04"}
+steps:
+  - id: open_punch_page
+    actor: employee
+    action: app_click
+    target: qingoa_home_punch_entry
+    wait_for: qingoa_punch_clock_in_button
+  - id: input_out_of_range_location
+    actor: employee
+    action: app_fill
+    fields:
+      qingoa_punch_test_lat_input: "39.900000"
+      qingoa_punch_test_lng_input: "116.500000"
+  - id: clock_in
+    actor: employee
+    action: app_click
+    target: qingoa_punch_clock_in_button
+    wait_after: 1.5
+expected:
+  - type: request_log
+    id: clock_request
+    method: POST
+    path: /api/punch/clock
+    response_code: 1004
+  - type: http_call
+    id: latest
+    method: GET
+    url: /debug/attendance/latest?username=konglingjia&punch_type=clock_in
+  - type: assert
+    source: $latest.response
+    path: data.record
+    operator: eq
+    value: null
+artifacts: [screenshot_after, requests_json, debug_json, report_md]

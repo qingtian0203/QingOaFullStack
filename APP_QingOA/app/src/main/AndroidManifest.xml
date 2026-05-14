@@ -42,6 +42,16 @@
             android:name=".ui.main.MainActivity"
             android:exported="false" />
 
+        <!-- v1.8：IM 聊天 -->
+        <activity
+            android:name=".ui.chat.ChatCreateActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".ui.chat.ChatDetailActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
         <!-- v1.5A：考勤打卡页（上/下班双卡） -->
         <activity
             android:name=".ui.punch.PunchCardActivity"
@@ -55,6 +65,17 @@
         <!-- v1.5A：打卡详情页 -->
         <activity
             android:name=".ui.punch.PunchRecordDetailActivity"
+            android:exported="false" />
+
+        <!-- v1.6B：补卡申诉与待我审批 -->
+        <activity
+            android:name=".ui.punch.PunchAppealActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <!-- v1.6C：WAP 流程中心容器 -->
+        <activity
+            android:name=".ui.workflow.WorkflowWebActivity"
             android:exported="false" />
 
         <!-- v1.5A：通知详情页（由 HomeFragment 公告列表点击进入，不依赖菜单 enabled） -->

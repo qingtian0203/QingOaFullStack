@@ -1,0 +1,97 @@
+id: qingoa.attendance.monthly_summary_full_day_and_missing
+title: 月汇总统计完整出勤与缺卡
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [api, debug]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_full_day
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-06-01"}
+  - type: http_call
+    id: reset_missing_day
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-06-02"}
+steps:
+  - id: freeze_full_day_morning
+    action: http_call
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-06-01 08:55:00"}
+  - id: full_day_clock_in
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/punch/clock
+    body:
+      lat: 39.811774
+      lng: 116.295234
+      device_id: android_device_001
+      punch_type: clock_in
+  - id: freeze_full_day_evening
+    action: http_call
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-06-01 18:05:00"}
+  - id: full_day_clock_out
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/punch/clock
+    body:
+      lat: 39.811774
+      lng: 116.295234
+      device_id: android_device_001
+      punch_type: clock_out
+  - id: freeze_missing_day_late
+    action: http_call
+    method: POST
+    url: /debug/freeze-time
+    body: {datetime: "2026-06-02 09:20:00"}
+  - id: missing_day_clock_in
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/punch/clock
+    body:
+      lat: 39.811774
+      lng: 116.295234
+      device_id: android_device_001
+      punch_type: clock_in
+  - id: monthly_summary
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/punch/monthly-summary?month=2026-06
+expected:
+  - type: assert
+    source: $monthly_summary.response
+    path: data.month
+    operator: eq
+    value: "2026-06"
+  - type: assert
+    source: $monthly_summary.response
+    path: data.normal_days
+    operator: gte
+    value: 1
+  - type: assert
+    source: $monthly_summary.response
+    path: data.late_count
+    operator: gte
+    value: 1
+  - type: assert
+    source: $monthly_summary.response
+    path: data.missing_punch_count
+    operator: gte
+    value: 1
+  - type: assert
+    source: $monthly_summary.response
+    path: data.total_work_hours
+    operator: gt
+    value: 0
+artifacts: [requests_json, debug_json, report_md]

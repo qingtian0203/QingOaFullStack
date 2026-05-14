@@ -1,0 +1,35 @@
+id: qingoa.mine_menu.dynamic_render
+title: 我的页动态菜单配置渲染
+version: v1.7
+business_line: mine_menu
+priority: P1
+layers: [api, app]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: mine_menu
+    actor: employee
+    method: GET
+    url: /api/mine/menu
+steps:
+  - id: open_mine_page
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_mine
+    wait_for: qingoa_mine_menu_dynamic_area
+    wait_timeout: 8
+expected:
+  - type: assert
+    source: $mine_menu.response
+    path: data.menus
+    operator: len_gte
+    value: 1
+  - type: ui_assert
+    selector: qingoa_mine_menu_dynamic_area
+    operator: exists
+artifacts: [screenshot, requests_json, report_md]

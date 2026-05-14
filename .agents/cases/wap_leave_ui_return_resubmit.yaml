@@ -1,0 +1,82 @@
+id: qingoa.leave.ui_return_resubmit
+title: App WebView 请假退回后修改重提
+version: v1.72
+business_line: workflow_wap
+priority: P0
+layers: [app, app_webview, wap, api, debug]
+target:
+  app: QingOA
+  entry: app_home_workflow_webview
+actors:
+  applicant: konglingjia
+  manager: manager
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: submit_leave
+    actor: applicant
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: personal
+      start_date: "{{today}}"
+      end_date: "{{today+3}}"
+      reason: App WebView 退回重提交验证
+    save:
+      process_instance_id: $submit_leave.response.data.process_instance_id
+  - type: return_task_for_instance
+    id: return_manager
+    actor: manager
+    params:
+      instance_id: $submit_leave.process_instance_id
+      note: 请缩短天数
+steps:
+  - id: reopen_workflow_as_applicant
+    actor: applicant
+    action: app_open_wap_entry
+    entry: workflow
+  - id: open_returned_detail
+    actor: applicant
+    action: wap_open
+    url: /wap/#/workflow/detail/$submit_leave.process_instance_id
+  - id: resubmit_ui
+    actor: applicant
+    action: wap_resubmit_leave
+    selectors:
+      form: "[data-testid='leave-resubmit-form']"
+      start_date: "[data-testid='leave-resubmit-start-date']"
+      end_date: "[data-testid='leave-resubmit-end-date']"
+      reason: "[data-testid='leave-resubmit-reason']"
+      submit: "[data-testid='leave-resubmit-button']"
+    params:
+      start_date: "{{today}}"
+      end_date: "{{today+1}}"
+      reason: App WebView 改为两天事假
+expected:
+  - type: assert
+    source: $return_manager.response
+    path: data.status
+    operator: eq
+    value: returned
+  - type: ui_assert
+    actor: applicant
+    selector: "[data-testid='workflow-action-cancel']"
+    operator: exists
+  - type: assert
+    source: $resubmit_ui.response
+    path: data.status
+    operator: eq
+    value: submitted
+  - type: http_call
+    id: latest_leave
+    method: GET
+    url: /debug/leave/latest?username=konglingjia
+  - type: assert
+    source: $latest_leave.response
+    path: data.leave.status
+    operator: eq
+    value: submitted
+artifacts: [device_screenshot, webview_screenshot, requests_json, report_md]

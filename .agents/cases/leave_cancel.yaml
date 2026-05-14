@@ -1,0 +1,48 @@
+id: qingoa.leave.cancel
+title: 申请人取消未完成请假流程
+version: v1.7
+business_line: leave_workflow_api
+priority: P0
+layers: [api, debug]
+actors:
+  applicant: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+steps:
+  - id: submit_leave
+    actor: applicant
+    action: http_call
+    method: POST
+    url: /api/leave/requests
+    body:
+      leave_type: annual
+      start_date: "{{today}}"
+      end_date: "{{today}}"
+      reason: 创建后取消
+    save:
+      leave_id: $submit_leave.response.data.id
+      process_instance_id: $submit_leave.response.data.process_instance_id
+  - id: cancel_leave
+    actor: applicant
+    action: http_call
+    method: POST
+    url: /api/leave/requests/$submit_leave.leave_id/cancel
+  - id: debug_state
+    action: http_call
+    method: GET
+    url: /debug/workflow/state?username=konglingjia
+expected:
+  - type: assert
+    source: $cancel_leave.response
+    path: data.status
+    operator: eq
+    value: cancelled
+  - type: assert
+    source: $debug_state.response
+    path: data.instances.0.status
+    operator: eq
+    value: cancelled
+artifacts: [requests_json, debug_json, report_md]

@@ -1,0 +1,46 @@
+id: qingoa.okr.ui_list_open_detail
+title: App OKR 列表进入详情
+version: v1.72
+business_line: okr
+priority: P2
+layers: [app, api]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_okrs
+    method: POST
+    url: /debug/okr/reset
+    body: {usernames: [konglingjia]}
+  - type: login
+    actor: employee
+    username: konglingjia
+    password: "123456"
+  - type: http_call
+    id: okr_list
+    actor: employee
+    method: GET
+    url: /api/okr/list
+steps:
+  - id: open_okr_tab
+    actor: employee
+    action: app_click
+    target: qingoa_bottom_tab_okr
+    wait_for: qingoa_okr_list
+    wait_timeout: 8
+  - id: open_okr_detail
+    actor: employee
+    action: app_click
+    target: qingoa_okr_item_$okr_list.response.data.list.0.id
+    wait_for: qingoa_okr_detail_content
+    wait_timeout: 8
+expected:
+  - type: assert
+    source: $okr_list.response
+    path: data.list
+    operator: len_gte
+    value: 1
+  - type: ui_assert
+    selector: qingoa_okr_detail_content
+    operator: exists
+artifacts: [screenshot, requests_json, report_md]

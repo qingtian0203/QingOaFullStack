@@ -7,7 +7,7 @@ from backend.core.response import ok
 from backend.db.database import get_db
 from backend.db.models import User
 from backend.dependencies import get_current_user
-from backend.schemas.punch import ClockInRequest, ClockRequest
+from backend.schemas.punch import ClockInRequest, ClockRequest, PunchAppealCreateRequest, PunchAppealReviewRequest
 from backend.services import punch_service
 
 router = APIRouter(prefix="/api/punch", tags=["punch"])
@@ -61,3 +61,54 @@ def record_detail(
     db: Session = Depends(get_db),
 ):
     return ok(punch_service.record_detail(db, user, record_id))
+
+
+@router.post("/appeal")
+def create_appeal(
+    body: PunchAppealCreateRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return ok(
+        punch_service.create_appeal(
+            db,
+            user,
+            body.punch_date,
+            body.punch_type,
+            body.reason,
+            body.expect_time,
+        ),
+        msg="补卡申诉已提交",
+    )
+
+
+@router.get("/appeals")
+def my_appeals(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return ok(punch_service.my_appeals(db, user))
+
+
+@router.get("/appeals/pending-review")
+def pending_review_appeals(user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    return ok(punch_service.pending_review_appeals(db, user))
+
+
+@router.post("/appeals/{appeal_id}/review")
+def review_appeal(
+    appeal_id: int,
+    body: PunchAppealReviewRequest,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    return ok(
+        punch_service.review_appeal(db, user, appeal_id, body.action, body.note),
+        msg="审批已处理",
+    )
+
+
+@router.get("/monthly-summary")
+def monthly_summary(
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    month: str | None = Query(None, pattern=r"^\d{4}-\d{2}$"),
+):
+    return ok(punch_service.monthly_summary(db, user, month))

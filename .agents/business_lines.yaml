@@ -1,0 +1,107 @@
+project: qingoa
+version: v1.7
+schema_version: 1
+case_root: .agents/cases
+assertion_style: source_path_operator_value
+description: QingOA v1.7 automated test inventory. Business rules and cases live in QingOA; QingAgent only provides generic execution.
+business_lines:
+  - id: im_chat
+    title: IM 聊天
+    priority: P0
+    layers: [app, api, debug]
+    cases:
+      - .agents/cases/im_friend_search_and_add.yaml
+      - .agents/cases/im_single_conversation_dedup.yaml
+      - .agents/cases/im_text_send_receive.yaml
+      - .agents/cases/im_image_send_display.yaml
+      - .agents/cases/im_unread_count_clear_on_open.yaml
+  - id: attendance
+    title: 考勤打卡与补卡申诉
+    priority: P0
+    layers: [app, api, debug]
+    skill: .agents/skills/qingoa-punch-automation/SKILL.md
+    cases:
+      - .agents/cases/attendance_clock_in_success.yaml
+      - .agents/cases/attendance_clock_in_out_of_range.yaml
+      - .agents/cases/attendance_clock_in_duplicate.yaml
+      - .agents/cases/attendance_clock_out_success.yaml
+      - .agents/cases/attendance_clock_out_requires_clock_in.yaml
+      - .agents/cases/attendance_clock_out_update.yaml
+      - .agents/cases/attendance_record_list_status.yaml
+      - .agents/cases/attendance_record_detail_display.yaml
+      - .agents/cases/attendance_monthly_summary_full_day_and_missing.yaml
+      - .agents/cases/attendance_appeal_submit_and_approve.yaml
+      - .agents/cases/attendance_appeal_reject.yaml
+      - .agents/cases/attendance_appeal_duplicate_blocked.yaml
+      - .agents/cases/attendance_appeal_pending_review_role_scope.yaml
+  - id: leave_workflow_api
+    title: 请假 API 状态机
+    priority: P0
+    layers: [api, debug]
+    skill: .agents/skills/qingoa-leave-workflow-automation/SKILL.md
+    cases:
+      - .agents/cases/leave_2_days_manager_approve.yaml
+      - .agents/cases/leave_4_days_manager_hr_approve.yaml
+      - .agents/cases/leave_return_and_resubmit.yaml
+      - .agents/cases/leave_cancel.yaml
+      - .agents/cases/leave_reject.yaml
+      - .agents/cases/leave_available_actions_matrix.yaml
+      - .agents/cases/leave_attachment_submit_and_approve.yaml
+      - .agents/cases/leave_attachment_invalid_file.yaml
+      - .agents/cases/leave_invalid_date_rejected.yaml
+      - .agents/cases/leave_urge_visible_in_urged_bucket.yaml
+      - .agents/cases/workflow_template_config_smoke.yaml
+  - id: workflow_wap
+    title: WAP 流程中心
+    priority: P0
+    layers: [wap, api, debug]
+    skill: .agents/skills/qingoa-leave-workflow-automation/SKILL.md
+    cases:
+      - .agents/cases/wap_ui_app_entry_tabs.yaml
+      - .agents/cases/wap_leave_ui_submit_2day_manager_approve.yaml
+      - .agents/cases/wap_leave_ui_return_resubmit.yaml
+      - .agents/cases/wap_leave_ui_available_actions_smoke.yaml
+      - .agents/cases/wap_leave_workflow_e2e.yaml
+      - .agents/cases/wap_workflow_tabs_empty_and_list.yaml
+      - .agents/cases/wap_leave_return_resubmit_ui.yaml
+      - .agents/cases/wap_available_actions_buttons.yaml
+      - .agents/cases/wap_leave_cancel_ui.yaml
+      - .agents/cases/wap_leave_reject_ui.yaml
+  - id: home_notices
+    title: 首页菜单与公告
+    priority: P1
+    layers: [api, app]
+    cases:
+      - .agents/cases/home_notices_ui_menu_open_notice_detail.yaml
+      - .agents/cases/home_notices_menu_list_unread.yaml
+      - .agents/cases/home_notices_detail_mark_read.yaml
+      - .agents/cases/home_notices_cross_user_unread.yaml
+      - .agents/cases/home_notices_app_list_detail_read.yaml
+  - id: mine_menu
+    title: 我的页动态菜单
+    priority: P1
+    layers: [api, app]
+    cases:
+      - .agents/cases/mine_menu_dynamic_render.yaml
+  - id: profile_auth
+    title: 登录态与用户资料
+    priority: P1
+    layers: [api, app]
+    cases:
+      - .agents/cases/profile_ui_profile_card_avatar.yaml
+      - .agents/cases/profile_auth_userinfo_bootstrap.yaml
+      - .agents/cases/profile_cache_then_network.yaml
+      - .agents/cases/profile_avatar_url_render.yaml
+      - .agents/cases/profile_avatar_file_upload_success.yaml
+      - .agents/cases/profile_avatar_file_upload_invalid_type.yaml
+      - .agents/cases/profile_app_cache_refresh_avatar.yaml
+  - id: okr
+    title: OKR 目标
+    priority: P2
+    layers: [api, app]
+    cases:
+      - .agents/cases/okr_ui_list_open_detail.yaml
+      - .agents/cases/okr_list_detail.yaml
+      - .agents/cases/okr_create_and_update_progress.yaml
+      - .agents/cases/okr_delete_and_forbidden_cross_user.yaml
+      - .agents/cases/okr_app_list_detail_smoke.yaml

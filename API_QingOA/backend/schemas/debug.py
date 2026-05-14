@@ -22,3 +22,31 @@ class FreezeTimeRequest(BaseModel):
 class ResetTodayPunchRequest(BaseModel):
     username: str | None = None
     user_id: int | None = None
+    punch_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class RecalculateAttendanceRequest(BaseModel):
+    username: str
+    month: str = Field(pattern=r"^\d{4}-\d{2}$")
+
+
+class ResetNoticeReadRequest(BaseModel):
+    username: str | None = None
+    user_id: int | None = None
+    notice_id: int | None = None
+
+
+class ResetOkrRequest(BaseModel):
+    usernames: list[str] | None = None
+    user_ids: list[int] | None = None
+
+
+class ResetProfileRequest(BaseModel):
+    username: str | None = None
+    user_id: int | None = None
+    avatar_url: str = ""
+
+
+class ResetImRequest(BaseModel):
+    usernames: list[str] | None = None
+    user_ids: list[int] | None = None

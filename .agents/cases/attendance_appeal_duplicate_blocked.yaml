@@ -1,0 +1,62 @@
+id: qingoa.attendance.appeal_duplicate_blocked
+title: 补卡申诉重复提交被拦截
+version: v1.7
+business_line: attendance
+priority: P0
+layers: [api, debug]
+actors:
+  employee: konglingjia
+preconditions:
+  - type: http_call
+    id: reset_workflow
+    method: POST
+    url: /debug/workflow/reset?username=konglingjia
+  - type: http_call
+    id: reset_makeup_punch_date
+    method: POST
+    url: /debug/punch/reset-today
+    body: {username: konglingjia, punch_date: "2026-06-03"}
+steps:
+  - id: submit_first_appeal
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/punch/appeal
+    body:
+      punch_date: "2026-06-03"
+      punch_type: clock_in
+      reason: forgot_clock_in
+      expect_time: "08:58:00"
+  - id: submit_duplicate_appeal
+    actor: employee
+    action: http_call
+    method: POST
+    url: /api/punch/appeal
+    expect_code: 1011
+    body:
+      punch_date: "2026-06-03"
+      punch_type: clock_in
+      reason: duplicated_request
+      expect_time: "08:59:00"
+  - id: my_appeals
+    actor: employee
+    action: http_call
+    method: GET
+    url: /api/punch/appeals
+expected:
+  - type: assert
+    source: $submit_first_appeal.response
+    path: data.status
+    operator: eq
+    value: submitted
+  - type: assert
+    source: $submit_duplicate_appeal.response
+    path: code
+    operator: eq
+    value: 1011
+  - type: assert
+    source: $my_appeals.response
+    path: data.list
+    operator: len_eq
+    value: 1
+artifacts: [requests_json, debug_json, report_md]
